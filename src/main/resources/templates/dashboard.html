@@ -1,5 +1,12 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" lang="en" data-bs-theme="dark">
+<!-- Theme is applied before CSS loads to prevent flash -->
+<script>
+    (function() {
+        const saved = localStorage.getItem('la-theme') || 'dark';
+        document.documentElement.setAttribute('data-bs-theme', saved);
+    })();
+</script>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
 <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
@@ -8,7 +15,8 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"/>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"/>
     <style>
-        :root {
+        /* ── Dark theme ─────────────────────────────── */
+        [data-bs-theme="dark"] {
             --bg-base:    #0d1117;
             --bg-surface: #161b22;
             --bg-raised:  #21262d;
@@ -18,7 +26,18 @@
             --accent:     #58a6ff;
         }
 
-        body { background: var(--bg-base); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; }
+        /* ── Light theme ────────────────────────────── */
+        [data-bs-theme="light"] {
+            --bg-base:    #f6f8fa;
+            --bg-surface: #ffffff;
+            --bg-raised:  #f0f2f5;
+            --border:     #d0d7de;
+            --text:       #1f2328;
+            --text-muted: #656d76;
+            --accent:     #0969da;
+        }
+
+        body { background: var(--bg-base); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; transition: background .2s, color .2s; }
 
         .navbar-brand { font-weight: 700; font-size: 1.2rem; letter-spacing: .5px; }
         .navbar { background: var(--bg-surface) !important; border-bottom: 1px solid var(--border); }
@@ -84,8 +103,12 @@
         .btn-outline-secondary:hover { background: var(--bg-raised); color: var(--text); }
 
         .msg-cell { max-width: 420px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
         .demo-btn { font-size: .8rem; }
+
+        /* Theme toggle */
+        .theme-toggle { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+        .theme-toggle .form-check-input { cursor: pointer; width: 2.4em; height: 1.3em; }
+        .theme-icon { font-size: 1rem; width: 16px; text-align: center; }
 
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
         .live-dot { display:inline-block; width:8px; height:8px; border-radius:50%; background:#3fb950; animation: pulse 2s infinite; }
@@ -94,13 +117,23 @@
 <body>
 
 <!-- Navbar -->
-<nav class="navbar navbar-dark px-3 mb-4">
+<nav class="navbar px-3 mb-4">
     <span class="navbar-brand">
         <i class="bi bi-activity me-2 text-info"></i>Log Analyzer
     </span>
     <div class="d-flex align-items-center gap-3">
         <span class="live-dot"></span>
         <span class="text-muted small">Live</span>
+
+        <!-- Theme toggle -->
+        <label class="theme-toggle mb-0" title="Toggle light/dark theme">
+            <i class="bi bi-moon-stars-fill theme-icon" id="themeIconMoon"></i>
+            <div class="form-check form-switch mb-0">
+                <input class="form-check-input" type="checkbox" id="themeToggle" onchange="toggleTheme(this)"/>
+            </div>
+            <i class="bi bi-sun-fill theme-icon text-warning" id="themeIconSun"></i>
+        </label>
+
         <button class="btn btn-sm btn-outline-secondary demo-btn"
                 onclick="generateDemoLogs()"
                 title="Generate 50 sample log entries via Kafka">
@@ -324,8 +357,55 @@
 
 <script th:inline="javascript">
     /*<![CDATA[*/
-    Chart.defaults.color = '#8b949e';
-    Chart.defaults.borderColor = '#30363d';
+
+    // ── Theme helpers ────────────────────────────────────────────────
+    function isDark() {
+        return document.documentElement.getAttribute('data-bs-theme') === 'dark';
+    }
+
+    function chartColors() {
+        const dark = isDark();
+        return {
+            grid:       dark ? '#21262d' : '#e8ecef',
+            tick:       dark ? '#8b949e' : '#656d76',
+            legend:     dark ? '#8b949e' : '#656d76',
+            border:     dark ? '#161b22' : '#ffffff',
+            line:       dark ? '#58a6ff' : '#0969da',
+            lineFill:   dark ? 'rgba(88,166,255,0.08)' : 'rgba(9,105,218,0.08)',
+        };
+    }
+
+    function applyChartTheme() {
+        const c = chartColors();
+        [levelChart, timeSeriesChart].forEach(chart => {
+            if (!chart) return;
+            chart.options.plugins.legend.labels.color = c.legend;
+            chart.options.scales && Object.values(chart.options.scales).forEach(axis => {
+                axis.ticks.color = c.tick;
+                axis.grid.color  = c.grid;
+            });
+            chart.update();
+        });
+        if (levelChart) levelChart.data.datasets[0].borderColor = c.border;
+        if (timeSeriesChart) {
+            timeSeriesChart.data.datasets[0].borderColor     = c.line;
+            timeSeriesChart.data.datasets[0].backgroundColor = c.lineFill;
+        }
+        [levelChart, timeSeriesChart].forEach(chart => chart && chart.update());
+    }
+
+    function toggleTheme(checkbox) {
+        const theme = checkbox.checked ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-bs-theme', theme);
+        localStorage.setItem('la-theme', theme);
+        applyChartTheme();
+    }
+
+    // Sync toggle switch state with saved theme on load
+    window.addEventListener('DOMContentLoaded', () => {
+        const toggle = document.getElementById('themeToggle');
+        toggle.checked = !isDark();
+    });
 
     // ── Level Doughnut ──────────────────────────────────────────────
     const levelData = /*[[${metrics.countByLevel}]]*/ {};
@@ -333,15 +413,16 @@
     const levelLabels = Object.keys(levelData);
     const levelValues = Object.values(levelData);
     const levelColors = levelLabels.map(l => LEVEL_COLORS[l] || '#6c757d');
+    const c0 = chartColors();
 
-    new Chart(document.getElementById('levelChart'), {
+    const levelChart = new Chart(document.getElementById('levelChart'), {
         type: 'doughnut',
         data: {
             labels: levelLabels,
             datasets: [{
                 data: levelValues,
                 backgroundColor: levelColors,
-                borderColor: '#161b22',
+                borderColor: c0.border,
                 borderWidth: 3,
                 hoverOffset: 6
             }]
@@ -352,7 +433,7 @@
             plugins: {
                 legend: {
                     position: 'bottom',
-                    labels: { color: '#8b949e', padding: 12, font: { size: 12 } }
+                    labels: { color: c0.legend, padding: 12, font: { size: 12 } }
                 }
             }
         }
@@ -363,15 +444,15 @@
     const tsLabels = timeSeriesData.map(p => p.label);
     const tsValues = timeSeriesData.map(p => p.count);
 
-    new Chart(document.getElementById('timeSeriesChart'), {
+    const timeSeriesChart = new Chart(document.getElementById('timeSeriesChart'), {
         type: 'line',
         data: {
             labels: tsLabels,
             datasets: [{
                 label: 'Log count',
                 data: tsValues,
-                borderColor: '#58a6ff',
-                backgroundColor: 'rgba(88,166,255,0.08)',
+                borderColor: c0.line,
+                backgroundColor: c0.lineFill,
                 fill: true,
                 tension: 0.35,
                 pointRadius: 3,
@@ -383,13 +464,13 @@
             maintainAspectRatio: false,
             scales: {
                 x: {
-                    ticks: { maxTicksLimit: 12, font: { size: 11 } },
-                    grid: { color: '#21262d' }
+                    ticks: { maxTicksLimit: 12, font: { size: 11 }, color: c0.tick },
+                    grid:  { color: c0.grid }
                 },
                 y: {
                     beginAtZero: true,
-                    ticks: { precision: 0, font: { size: 11 } },
-                    grid: { color: '#21262d' }
+                    ticks: { precision: 0, font: { size: 11 }, color: c0.tick },
+                    grid:  { color: c0.grid }
                 }
             },
             plugins: { legend: { display: false } }
