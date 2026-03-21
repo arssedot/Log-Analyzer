@@ -160,7 +160,7 @@
 
         <div class="d-flex align-items-center gap-2">
             <span class="live-dot" id="normalDot"></span>
-            <span class="text-muted small" id="globalRefreshTs" style="min-width:90px;">Live</span>
+            <span class="text-muted small" id="globalRefreshTs" style="min-width:90px;" data-i18n="nav.live">Live</span>
         </div>
 
         <div id="streamIndicator" class="d-none d-flex align-items-center stream-pill">
@@ -170,7 +170,7 @@
         </div>
 
         <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addWidgetModal" style="font-size:.8rem;">
-            <i class="bi bi-plus-lg me-1"></i>Add Widget
+            <i class="bi bi-plus-lg me-1"></i><span data-i18n="nav.addWidget">Add Widget</span>
         </button>
 
         <button class="btn btn-sm btn-outline-success" id="streamBtn" onclick="toggleStream()" style="font-size:.8rem;">
@@ -212,9 +212,9 @@
     <div id="widget-grid" class="row g-3 mb-4"></div>
     <div id="widget-empty" class="text-center text-muted py-5 mb-4" style="display:none;">
         <i class="bi bi-grid fs-1 d-block mb-2 opacity-50"></i>
-        <p class="mb-2">No widgets yet.</p>
+        <p class="mb-2" data-i18n="widget.noWidgets">No widgets yet.</p>
         <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addWidgetModal">
-            <i class="bi bi-plus-lg me-1"></i>Add your first widget
+            <i class="bi bi-plus-lg me-1"></i><span data-i18n="widget.addFirst">Add your first widget</span>
         </button>
     </div>
 
@@ -224,20 +224,20 @@
         <!-- Section header -->
         <div class="log-section-title">
             <i class="bi bi-list-ul"></i>
-            Log Explorer
+            <span data-i18n="log.title">Log Explorer</span>
             <span class="log-live-badge" id="logLiveBadge" style="display:none;">● LIVE</span>
             <button class="btn btn-sm btn-outline-danger ms-auto"
                     onclick="openClearModal()" style="font-size:.75rem; font-weight:500; text-transform:none; letter-spacing:0;">
-                <i class="bi bi-trash3 me-1"></i>Clear Logs
+                <i class="bi bi-trash3 me-1"></i><span data-i18n="log.clearLogs">Clear Logs</span>
             </button>
         </div>
 
         <!-- Filter form (no page reload — handled by JS) -->
         <form id="logFilterForm" class="row g-2 mb-3 align-items-end" onsubmit="applyFilter(event)">
             <div class="col-6 col-md-2">
-                <label class="form-label text-muted small mb-1">Level</label>
+                <label class="form-label text-muted small mb-1" data-i18n="log.level">Level</label>
                 <select id="fLevel" class="form-select form-select-sm">
-                    <option value="">All Levels</option>
+                    <option value="" data-i18n="log.allLevels">All Levels</option>
                     <option value="DEBUG">DEBUG</option>
                     <option value="INFO">INFO</option>
                     <option value="WARN">WARN</option>
@@ -245,20 +245,22 @@
                 </select>
             </div>
             <div class="col-6 col-md-2">
-                <label class="form-label text-muted small mb-1">Service</label>
-                <input id="fService" type="text" class="form-control form-control-sm" placeholder="e.g. auth-service"/>
+                <label class="form-label text-muted small mb-1" data-i18n="log.service">Service</label>
+                <input id="fService" type="text" class="form-control form-control-sm"
+                       placeholder="e.g. auth-service" data-i18n-placeholder="log.servicePlaceholder"/>
             </div>
             <div class="col-6 col-md-2">
-                <label class="form-label text-muted small mb-1">From</label>
+                <label class="form-label text-muted small mb-1" data-i18n="log.from">From</label>
                 <input id="fFrom" type="datetime-local" class="form-control form-control-sm"/>
             </div>
             <div class="col-6 col-md-2">
-                <label class="form-label text-muted small mb-1">To</label>
+                <label class="form-label text-muted small mb-1" data-i18n="log.to">To</label>
                 <input id="fTo" type="datetime-local" class="form-control form-control-sm"/>
             </div>
             <div class="col-md-3">
-                <label class="form-label text-muted small mb-1">Search message</label>
-                <input id="fQ" type="text" class="form-control form-control-sm" placeholder="Full-text search..."/>
+                <label class="form-label text-muted small mb-1" data-i18n="log.search">Search message</label>
+                <input id="fQ" type="text" class="form-control form-control-sm"
+                       placeholder="Full-text search..." data-i18n-placeholder="log.searchPlaceholder"/>
             </div>
             <div class="col-auto d-flex gap-1">
                 <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-search"></i></button>
@@ -270,9 +272,9 @@
 
         <!-- Status bar -->
         <div class="d-flex align-items-center justify-content-between mb-2 flex-wrap gap-2">
-            <span class="text-muted small" id="logCount">Loading…</span>
+            <span class="text-muted small" id="logCount" data-i18n="log.loading">Loading…</span>
             <div class="d-flex align-items-center gap-1" id="pageSizeWrap" style="display:none!important;">
-                <span class="text-muted small">Per page:</span>
+                <span class="text-muted small" data-i18n="log.perPage">Per page:</span>
                 <select id="pageSizeSelect" class="form-select form-select-sm" style="width:72px;" onchange="changePageSize(this.value)">
                     <option value="20" selected>20</option>
                     <option value="50">50</option>
@@ -285,12 +287,12 @@
         <div class="table-responsive">
             <table class="table table-sm mb-0">
                 <thead><tr>
-                    <th style="width:155px">Timestamp (UTC)</th>
-                    <th style="width:75px">Level</th>
-                    <th style="width:150px">Service</th>
-                    <th>Message</th>
-                    <th style="width:140px">Trace ID</th>
-                    <th style="width:90px">Host</th>
+                    <th style="width:155px" data-i18n="log.colTimestamp">Timestamp (UTC)</th>
+                    <th style="width:75px"  data-i18n="log.colLevel">Level</th>
+                    <th style="width:150px" data-i18n="log.colService">Service</th>
+                    <th data-i18n="log.colMessage">Message</th>
+                    <th style="width:140px" data-i18n="log.colTrace">Trace ID</th>
+                    <th style="width:90px"  data-i18n="log.colHost">Host</th>
                 </tr></thead>
                 <tbody id="logTableBody">
                     <tr><td colspan="6" class="text-center text-muted py-5">
@@ -304,10 +306,10 @@
         <div class="mt-3 d-flex align-items-center justify-content-between flex-wrap gap-3">
             <div id="logPagination"></div>
             <div class="d-flex align-items-center gap-2" id="gotoWrap" style="display:none;">
-                <span class="text-muted small">Jump to page:</span>
+                <span class="text-muted small" data-i18n="log.jumpTo">Jump to page:</span>
                 <input type="number" id="gotoPage" class="form-control form-control-sm"
                        min="1" placeholder="№" onkeydown="if(event.key==='Enter') jumpToPage()"/>
-                <button class="btn btn-sm btn-outline-secondary" onclick="jumpToPage()">Go</button>
+                <button class="btn btn-sm btn-outline-secondary" onclick="jumpToPage()" data-i18n="log.go">Go</button>
             </div>
         </div>
     </div>
@@ -318,28 +320,27 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title text-danger"><i class="bi bi-trash3 me-2"></i>Clear Logs</h5>
+                <h5 class="modal-title text-danger"><i class="bi bi-trash3 me-2"></i><span data-i18n="clear.title">Clear Logs</span></h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <div class="alert alert-warning d-flex align-items-center gap-2 mb-4" style="font-size:.85rem;">
                     <i class="bi bi-exclamation-triangle-fill"></i>
-                    This action is <strong>permanent</strong> and cannot be undone.
+                    <span data-i18n="clear.warning">This action is permanent and cannot be undone.</span>
                 </div>
 
-                <!-- Scope selector -->
                 <div class="mb-3">
-                    <label class="form-label text-muted small text-uppercase fw-semibold" style="letter-spacing:.5px;">What to delete</label>
+                    <label class="form-label text-muted small text-uppercase fw-semibold" style="letter-spacing:.5px;" data-i18n="clear.scope">What to delete</label>
 
                     <div class="card p-3 mb-2" id="scopeFilteredCard" onclick="selectClearScope('filtered')" style="cursor:pointer;">
                         <div class="d-flex align-items-start gap-2">
                             <input class="form-check-input mt-1 flex-shrink-0" type="radio" name="clearScope" id="scopeFiltered" value="filtered"/>
                             <div class="flex-grow-1">
-                                <div class="fw-semibold" style="font-size:.88rem;">Matching current filter</div>
+                                <div class="fw-semibold" style="font-size:.88rem;" data-i18n="clear.filtered">Matching current filter</div>
                                 <div class="text-muted mt-1" style="font-size:.78rem;" id="clearFilterSummary">—</div>
                                 <div class="mt-1">
                                     <span class="badge bg-danger" id="clearFilteredCount">0</span>
-                                    <span class="text-muted small ms-1">entries will be deleted</span>
+                                    <span class="text-muted small ms-1" data-i18n="clear.entries">entries will be deleted</span>
                                 </div>
                             </div>
                         </div>
@@ -349,11 +350,11 @@
                         <div class="d-flex align-items-start gap-2">
                             <input class="form-check-input mt-1 flex-shrink-0" type="radio" name="clearScope" id="scopeAll" value="all"/>
                             <div class="flex-grow-1">
-                                <div class="fw-semibold" style="font-size:.88rem;">All logs</div>
-                                <div class="text-muted mt-1" style="font-size:.78rem;">Remove every log entry in the database</div>
+                                <div class="fw-semibold" style="font-size:.88rem;" data-i18n="clear.allLogs">All logs</div>
+                                <div class="text-muted mt-1" style="font-size:.78rem;" data-i18n="clear.allLogs.desc">Remove every log entry in the database</div>
                                 <div class="mt-1">
                                     <span class="badge bg-danger" id="clearAllCount">0</span>
-                                    <span class="text-muted small ms-1">entries will be deleted</span>
+                                    <span class="text-muted small ms-1" data-i18n="clear.entries">entries will be deleted</span>
                                 </div>
                             </div>
                         </div>
@@ -361,9 +362,9 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal" data-i18n="clear.cancel">Cancel</button>
                 <button type="button" class="btn btn-danger btn-sm" id="confirmDeleteBtn" onclick="executeClearLogs()">
-                    <i class="bi bi-trash3 me-1"></i><span id="confirmDeleteLabel">Delete</span>
+                    <i class="bi bi-trash3 me-1"></i><span id="confirmDeleteLabel" data-i18n="clear.delete">Delete</span>
                 </button>
             </div>
         </div>
@@ -433,7 +434,7 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title"><i class="bi bi-grid me-2"></i>Add Widget</h5>
+                <h5 class="modal-title"><i class="bi bi-grid me-2"></i><span data-i18n="widget.add">Add Widget</span></h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
@@ -494,10 +495,16 @@ const I18N = {
         'log.colLevel':'Level', 'log.colService':'Service', 'log.colMessage':'Message',
         'log.colTrace':'Trace ID', 'log.colHost':'Host',
         'log.empty':'No logs match the current filters', 'log.loading':'Loading…',
+        'log.entries':'entries found', 'log.entry':'entry found',
+        'log.page':'page', 'log.of':'of',
+        'log.servicePlaceholder':'e.g. auth-service',
+        'log.searchPlaceholder':'Full-text search...',
         'clear.title':'Clear Logs', 'clear.warning':'This action is permanent and cannot be undone.',
-        'clear.filtered':'Matching current filter', 'clear.allLogs':'All logs',
-        'clear.allLogs.desc':'Remove every log entry in the database',
-        'clear.entries':'entries will be deleted', 'clear.cancel':'Cancel', 'clear.delete':'Delete',
+        'clear.scope':'What to delete',
+        'clear.filtered':'Matching current filter', 'clear.noFilter':'No active filter — same as deleting all',
+        'clear.allLogs':'All logs', 'clear.allLogs.desc':'Remove every log entry in the database',
+        'clear.entries':'entries will be deleted', 'clear.cancel':'Cancel',
+        'clear.delete':'Delete', 'clear.deleting':'Deleting…',
         'widget.add':'Add Widget', 'widget.noWidgets':'No widgets yet.',
         'widget.addFirst':'Add your first widget',
         'settings.title':'Settings', 'settings.profile':'Profile',
@@ -505,7 +512,7 @@ const I18N = {
         'settings.changeAvatar':'Change avatar', 'settings.preferences':'Preferences',
         'settings.language':'Language', 'settings.save':'Save', 'settings.saved':'Saved!',
         'settings.cancel':'Cancel',
-        'stream.logs':' logs',
+        'stream.logs':' logs', 'nav.live':'Live', 'nav.updated':'Updated',
     },
     ru: {
         'nav.addWidget':'Добавить виджет', 'nav.startStream':'Начать поток', 'nav.stopStream':'Остановить поток',
@@ -513,14 +520,20 @@ const I18N = {
         'log.title':'Просмотр логов', 'log.clearLogs':'Очистить логи', 'log.level':'Уровень',
         'log.allLevels':'Все уровни', 'log.service':'Сервис', 'log.from':'С', 'log.to':'По',
         'log.search':'Поиск по сообщению', 'log.clear':'Сбросить', 'log.jumpTo':'Перейти на стр.:',
-        'log.go':'Перейти', 'log.perPage':'На странице:', 'log.colTimestamp':'Время (UTC)',
+        'log.go':'OK', 'log.perPage':'На странице:', 'log.colTimestamp':'Время (UTC)',
         'log.colLevel':'Уровень', 'log.colService':'Сервис', 'log.colMessage':'Сообщение',
         'log.colTrace':'Trace ID', 'log.colHost':'Хост',
         'log.empty':'Логи не найдены', 'log.loading':'Загрузка…',
+        'log.entries':'записей найдено', 'log.entry':'запись найдена',
+        'log.page':'стр.', 'log.of':'из',
+        'log.servicePlaceholder':'напр. auth-service',
+        'log.searchPlaceholder':'Полнотекстовый поиск...',
         'clear.title':'Очистить логи', 'clear.warning':'Это действие необратимо.',
-        'clear.filtered':'По текущему фильтру', 'clear.allLogs':'Все логи',
-        'clear.allLogs.desc':'Удалить все записи из базы данных',
-        'clear.entries':'записей будет удалено', 'clear.cancel':'Отмена', 'clear.delete':'Удалить',
+        'clear.scope':'Что удалить',
+        'clear.filtered':'По текущему фильтру', 'clear.noFilter':'Фильтр не активен — удалит все записи',
+        'clear.allLogs':'Все логи', 'clear.allLogs.desc':'Удалить все записи из базы данных',
+        'clear.entries':'записей будет удалено', 'clear.cancel':'Отмена',
+        'clear.delete':'Удалить', 'clear.deleting':'Удаление…',
         'widget.add':'Добавить виджет', 'widget.noWidgets':'Виджетов нет.',
         'widget.addFirst':'Добавить первый виджет',
         'settings.title':'Настройки', 'settings.profile':'Профиль',
@@ -528,7 +541,7 @@ const I18N = {
         'settings.changeAvatar':'Изменить аватар', 'settings.preferences':'Настройки',
         'settings.language':'Язык', 'settings.save':'Сохранить', 'settings.saved':'Сохранено!',
         'settings.cancel':'Отмена',
-        'stream.logs':' логов',
+        'stream.logs':' логов', 'nav.live':'Активно', 'nav.updated':'Обновлено',
     }
 };
 function t(key) { return I18N[currentLang]?.[key] ?? I18N.en[key] ?? key; }
@@ -702,9 +715,10 @@ function renderLog(page) {
 
     // Count line
     const total = logTotalElements.toLocaleString();
+    const entryWord = page.totalElements === 1 ? t('log.entry') : t('log.entries');
     document.getElementById('logCount').textContent =
-        `${total} entr${page.totalElements === 1 ? 'y' : 'ies'} found` +
-        (page.totalPages > 1 ? ` — page ${cur + 1} of ${page.totalPages}` : '');
+        `${total} ${entryWord}` +
+        (page.totalPages > 1 ? ` — ${t('log.page')} ${cur + 1} ${t('log.of')} ${page.totalPages}` : '');
 
     // Show page-size & goto only when there's something to page through
     document.getElementById('pageSizeWrap').style.setProperty('display', 'flex', 'important');
@@ -716,7 +730,7 @@ function renderLog(page) {
     const tbody = document.getElementById('logTableBody');
     if (!page.content?.length) {
         tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-5">
-            <i class="bi bi-inbox fs-1 d-block mb-2"></i>No logs match the current filters</td></tr>`;
+            <i class="bi bi-inbox fs-1 d-block mb-2"></i>${t('log.empty')}</td></tr>`;
     } else {
         tbody.innerHTML = page.content.map(log => `<tr>
             <td class="text-nowrap font-monospace small">${log.formattedTimestamp ?? ''}</td>
@@ -893,9 +907,9 @@ async function tableLog(el, widget, url) {
     const data = await fetch(url).then(r=>r.json()).catch(()=>({content:[]}));
     const logs = data.content??[];
     const rows = !logs.length
-        ? '<tr><td colspan="4" class="text-center text-muted py-4"><i class="bi bi-inbox"></i> No entries</td></tr>'
+        ? `<tr><td colspan="4" class="text-center text-muted py-4"><i class="bi bi-inbox"></i> ${t('log.empty')}</td></tr>`
         : logs.map(log=>`<tr><td class="font-monospace small text-nowrap">${log.formattedTimestamp??''}</td><td><span class="badge ${BADGE_CLASS[log.level]??'badge-DEBUG'}">${log.level??''}</span></td><td class="small">${esc(log.serviceName??'')}</td><td class="small msg-cell" title="${esc(log.message??'')}">${esc(log.message??'')}</td></tr>`).join('');
-    el.innerHTML = `<div class="widget-title"><i class="bi bi-table me-1"></i>${widget.title}</div><div class="table-responsive"><table class="table table-sm mb-0"><thead><tr><th>Timestamp</th><th>Level</th><th>Service</th><th>Message</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+    el.innerHTML = `<div class="widget-title"><i class="bi bi-table me-1"></i>${widget.title}</div><div class="table-responsive"><table class="table table-sm mb-0"><thead><tr><th>${t('log.colTimestamp')}</th><th>${t('log.colLevel')}</th><th>${t('log.colService')}</th><th>${t('log.colMessage')}</th></tr></thead><tbody>${rows}</tbody></table></div>`;
 }
 
 function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
@@ -1003,8 +1017,8 @@ async function periodicStatRefresh() {
             if (STAT_TYPES.has(w.type))  updateStatInPlace(w, m);
             if (GAUGE_TYPES.has(w.type)) updateGaugeInPlace(w, sysM);
         });
-        document.getElementById('globalRefreshTs').textContent = 'Updated ' + timeStr();
-    } catch(e) {}
+        document.getElementById('globalRefreshTs').textContent = t('nav.updated') + ' ' + timeStr();
+        } catch(e) {}
 }
 
 async function periodicFullRefresh() {
@@ -1112,7 +1126,7 @@ function startStream() {
                 if (STAT_TYPES.has(w.type))  updateStatInPlace(w, m);
                 if (GAUGE_TYPES.has(w.type)) updateGaugeInPlace(w, sysM);
             });
-            document.getElementById('globalRefreshTs').textContent = 'Updated ' + timeStr();
+            document.getElementById('globalRefreshTs').textContent = t('nav.updated') + ' ' + timeStr();
         }
 
         // Refresh widget tables
@@ -1211,13 +1225,13 @@ function openClearModal() {
 
     // Filter summary text
     const parts = [];
-    if (logFilter.level)   parts.push('Level: ' + logFilter.level);
-    if (logFilter.service) parts.push('Service: ' + logFilter.service);
-    if (logFilter.from)    parts.push('From: ' + logFilter.from);
-    if (logFilter.to)      parts.push('To: ' + logFilter.to);
-    if (logFilter.q)       parts.push('Search: "' + logFilter.q + '"');
+    if (logFilter.level)   parts.push(t('log.level')   + ': ' + logFilter.level);
+    if (logFilter.service) parts.push(t('log.service') + ': ' + logFilter.service);
+    if (logFilter.from)    parts.push(t('log.from')    + ': ' + logFilter.from);
+    if (logFilter.to)      parts.push(t('log.to')      + ': ' + logFilter.to);
+    if (logFilter.q)       parts.push(t('log.search')  + ': "' + logFilter.q + '"');
     document.getElementById('clearFilterSummary').textContent =
-        parts.length ? parts.join(' · ') : 'No active filter — same as deleting all';
+        parts.length ? parts.join(' · ') : t('clear.noFilter');
 
     // Auto-select scope
     selectClearScope(hasFilter ? 'filtered' : 'all');
@@ -1233,7 +1247,7 @@ function selectClearScope(scope) {
     document.getElementById('scopeAllCard').classList.toggle('scope-selected', scope === 'all');
 
     const count = scope === 'all' ? (metricsCache?.totalLogs ?? 0) : logTotalElements;
-    document.getElementById('confirmDeleteLabel').textContent = `Delete ${fmt(count)} entr${count === 1 ? 'y' : 'ies'}`;
+    document.getElementById('confirmDeleteLabel').textContent = `${t('clear.delete')} ${fmt(count)}`;
 }
 
 // ════════════════════════════════════════════════════════════════════
@@ -1333,7 +1347,7 @@ async function uploadAvatar(input) {
 async function executeClearLogs() {
     const btn = document.getElementById('confirmDeleteBtn');
     btn.disabled = true;
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Deleting…';
+    btn.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span>${t('clear.deleting')}`;
 
     const params = new URLSearchParams();
     if (_clearScope === 'filtered') {
@@ -1352,7 +1366,7 @@ async function executeClearLogs() {
         console.error('Delete failed', e);
     } finally {
         btn.disabled = false;
-        btn.innerHTML = '<i class="bi bi-trash3 me-1"></i><span id="confirmDeleteLabel">Delete</span>';
+        btn.innerHTML = `<i class="bi bi-trash3 me-1"></i><span id="confirmDeleteLabel" data-i18n="clear.delete">${t('clear.delete')}</span>`;
     }
 
     bootstrap.Modal.getInstance(document.getElementById('clearLogsModal'))?.hide();
