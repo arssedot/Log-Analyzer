@@ -33,7 +33,12 @@ public class MetricsService {
 
         Map<String, Long> countByLevel = buildCountByLevel();
 
-        double errorRate = computeErrorRate();
+        Instant oneHourAgo = Instant.now().minus(1, ChronoUnit.HOURS);
+        long logsLastHour = repository.countByTimestampAfter(oneHourAgo);
+
+        double errorRate = computeErrorRate(logsLastHour, oneHourAgo);
+
+        long servicesCount = repository.countDistinctServiceNames();
 
         List<ServiceStat> topServices = repository
                 .findTopServices(PageRequest.of(0, 10))
@@ -43,7 +48,7 @@ public class MetricsService {
 
         List<TimeSeriesPoint> timeSeries = buildHourlyTimeSeries(24);
 
-        return new MetricsSummaryDto(total, countByLevel, errorRate, topServices, timeSeries);
+        return new MetricsSummaryDto(total, countByLevel, errorRate, topServices, timeSeries, logsLastHour, servicesCount);
     }
 
     private Map<String, Long> buildCountByLevel() {
@@ -57,9 +62,7 @@ public class MetricsService {
         return result;
     }
 
-    private double computeErrorRate() {
-        Instant oneHourAgo = Instant.now().minus(1, ChronoUnit.HOURS);
-        long totalRecent = repository.countByTimestampAfter(oneHourAgo);
+    private double computeErrorRate(long totalRecent, Instant oneHourAgo) {
         if (totalRecent == 0) return 0.0;
         long errors = repository.countByLevelAndTimestampAfter(LogLevel.ERROR, oneHourAgo);
         return Math.round((errors * 100.0 / totalRecent) * 10.0) / 10.0;

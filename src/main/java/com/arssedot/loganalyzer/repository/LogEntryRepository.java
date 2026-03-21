@@ -29,5 +29,11 @@ public interface LogEntryRepository extends JpaRepository<LogEntry, Long>, JpaSp
     @Query("SELECT DISTINCT l.serviceName FROM LogEntry l ORDER BY l.serviceName")
     List<String> findDistinctServiceNames();
 
+    @Query("SELECT COUNT(DISTINCT l.serviceName) FROM LogEntry l")
+    long countDistinctServiceNames();
+
+    @Query("SELECT l FROM LogEntry l WHERE l.level = :level ORDER BY l.timestamp DESC")
+    List<LogEntry> findTopByLevelOrderByTimestampDesc(@Param("level") LogLevel level, Pageable pageable);
+
     Page<LogEntry> findAllByOrderByTimestampDesc(Pageable pageable);
 }

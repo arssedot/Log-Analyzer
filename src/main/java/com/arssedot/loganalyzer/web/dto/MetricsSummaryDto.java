@@ -8,7 +8,9 @@ public record MetricsSummaryDto(
         Map<String, Long> countByLevel,
         double errorRate,
         List<ServiceStat> topServices,
-        List<TimeSeriesPoint> timeSeriesData
+        List<TimeSeriesPoint> timeSeriesData,
+        long logsLastHour,
+        long servicesCount
 ) {
     public record ServiceStat(String serviceName, long count) {}
 

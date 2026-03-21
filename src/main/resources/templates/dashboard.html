@@ -1,9 +1,8 @@
 <!DOCTYPE html>
-<!-- Theme is applied before CSS loads to prevent flash -->
 <script>
     (function() {
-        const saved = localStorage.getItem('la-theme') || 'dark';
-        document.documentElement.setAttribute('data-bs-theme', saved);
+        const t = localStorage.getItem('la-theme') || 'dark';
+        document.documentElement.setAttribute('data-bs-theme', t);
     })();
 </script>
 <html xmlns:th="http://www.thymeleaf.org"
@@ -17,7 +16,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"/>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"/>
     <style>
-        /* ── Dark theme ─────────────────────────────── */
+        /* ── Themes ─────────────────────────────────────────────────── */
         [data-bs-theme="dark"] {
             --bg-base:    #0d1117;
             --bg-surface: #161b22;
@@ -27,8 +26,6 @@
             --text-muted: #8b949e;
             --accent:     #58a6ff;
         }
-
-        /* ── Light theme ────────────────────────────── */
         [data-bs-theme="light"] {
             --bg-base:    #f6f8fa;
             --bg-surface: #ffffff;
@@ -41,172 +38,247 @@
 
         body { background: var(--bg-base); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; transition: background .2s, color .2s; }
 
-        .navbar-brand { font-weight: 700; font-size: 1.2rem; letter-spacing: .5px; }
+        /* ── Navbar ──────────────────────────────────────────────────── */
         .navbar { background: var(--bg-surface) !important; border-bottom: 1px solid var(--border); }
+        .navbar-brand { font-weight: 700; font-size: 1.2rem; letter-spacing: .5px; }
+        .theme-toggle { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+        .theme-toggle .form-check-input { cursor: pointer; width: 2.4em; height: 1.3em; }
+        .theme-icon { font-size: 1rem; width: 16px; text-align: center; }
 
-        .card {
-            background: var(--bg-surface);
-            border: 1px solid var(--border);
-            border-radius: 10px;
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+        .live-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #3fb950; animation: pulse 2s infinite; }
+        .stream-pill {
+            background: rgba(218,54,51,.12);
+            border: 1px solid rgba(248,81,73,.3);
+            border-radius: 20px;
+            padding: 3px 10px;
+            gap: 6px;
         }
+        .stream-pill .live-dot { background: #f85149; }
 
-        .stat-icon { font-size: 2rem; }
-        .stat-value { font-size: 2rem; font-weight: 700; line-height: 1; }
+        /* ── Cards ───────────────────────────────────────────────────── */
+        .card { background: var(--bg-surface); border: 1px solid var(--border); border-radius: 10px; transition: border-color .2s; }
 
+        /* ── Stat widgets ─────────────────────────────────────────────
+           Vertical layout: label → value → sub
+           Icon floated to top-right
+        ─────────────────────────────────────────────────────────────── */
+        .stat-label {
+            font-size: .68rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: .6px;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+        .stat-value {
+            /* clamp: min 1.1rem, preferred 3.5vw, max 1.9rem */
+            font-size: clamp(1.1rem, 3.5vw, 1.9rem);
+            font-weight: 700;
+            line-height: 1.1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .stat-sub { font-size: .67rem; color: var(--text-muted); margin-top: 5px; }
+
+        .stat-icon-wrap {
+            width: 36px; height: 36px;
+            border-radius: 9px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.05rem;
+            flex-shrink: 0;
+        }
+        .si-primary  { background: rgba(88,166,255,.15);  color: #58a6ff; }
+        .si-danger   { background: rgba(248,81,73,.15);   color: #f85149; }
+        .si-warning  { background: rgba(210,153,34,.15);  color: #d29922; }
+        .si-info     { background: rgba(86,207,225,.15);  color: #56cfe1; }
+        .si-success  { background: rgba(63,185,80,.15);   color: #3fb950; }
+        .si-purple   { background: rgba(188,140,255,.15); color: #bc8cff; }
+        .si-muted    { background: rgba(139,148,158,.15); color: #8b949e; }
+
+        /* Flash on value update */
+        @keyframes flash-val { 0%,100%{opacity:1} 45%{opacity:.2} }
+        .val-flash { animation: flash-val .5s ease; }
+
+        /* ── Charts ──────────────────────────────────────────────────── */
         .chart-wrap { position: relative; height: 220px; }
+        .widget-title { font-size: .68rem; text-transform: uppercase; letter-spacing: .6px; font-weight: 600; color: var(--text-muted); margin-bottom: 12px; }
 
+        /* ── Tables ──────────────────────────────────────────────────── */
         .table { color: var(--text); --bs-table-bg: transparent; }
         .table thead th {
             background: var(--bg-raised);
             border-color: var(--border);
             color: var(--text-muted);
-            font-size: .75rem;
+            font-size: .7rem;
             text-transform: uppercase;
-            letter-spacing: .6px;
+            letter-spacing: .5px;
         }
         .table tbody tr { border-color: var(--border); }
         .table tbody tr:hover { background: var(--bg-raised); }
-        .table td { vertical-align: middle; font-size: .85rem; }
+        .table td { vertical-align: middle; font-size: .83rem; }
+        .msg-cell { max-width: 380px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
+        /* ── Forms ───────────────────────────────────────────────────── */
         .form-control, .form-select {
             background: var(--bg-raised);
             border-color: var(--border);
             color: var(--text);
-            font-size: .85rem;
+            font-size: .84rem;
         }
         .form-control:focus, .form-select:focus {
             background: var(--bg-raised);
             color: var(--text);
             border-color: var(--accent);
-            box-shadow: 0 0 0 .2rem rgba(88,166,255,.2);
+            box-shadow: 0 0 0 .18rem rgba(88,166,255,.2);
         }
         .form-control::placeholder { color: var(--text-muted); }
         .form-select option { background: var(--bg-raised); }
 
-        /* Level badges */
+        /* ── Badges ──────────────────────────────────────────────────── */
         .badge-DEBUG { background: #6c757d !important; }
         .badge-INFO  { background: #1f6feb !important; }
-        .badge-WARN  { background: #d29922 !important; color: #fff !important; }
+        .badge-WARN  { background: #d29922 !important; color:#fff!important; }
         .badge-ERROR { background: #da3633 !important; }
 
-        .pagination .page-link {
-            background: var(--bg-raised);
-            border-color: var(--border);
-            color: var(--accent);
-        }
+        /* ── Pagination ──────────────────────────────────────────────── */
+        .pagination .page-link { background: var(--bg-raised); border-color: var(--border); color: var(--accent); }
         .pagination .page-link:hover { background: var(--border); }
         .pagination .page-item.active .page-link { background: #1f6feb; border-color: #1f6feb; color: #fff; }
         .pagination .page-item.disabled .page-link { background: var(--bg-raised); color: var(--text-muted); }
 
-        .btn-outline-secondary {
-            border-color: var(--border);
-            color: var(--text-muted);
-        }
+        .btn-outline-secondary { border-color: var(--border); color: var(--text-muted); }
         .btn-outline-secondary:hover { background: var(--bg-raised); color: var(--text); }
 
-        .msg-cell { max-width: 420px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .demo-btn { font-size: .8rem; }
-
-        /* Theme toggle */
-        .theme-toggle { display: flex; align-items: center; gap: 6px; cursor: pointer; }
-        .theme-toggle .form-check-input { cursor: pointer; width: 2.4em; height: 1.3em; }
-        .theme-icon { font-size: 1rem; width: 16px; text-align: center; }
-
-        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
-        .live-dot { display:inline-block; width:8px; height:8px; border-radius:50%; background:#3fb950; animation: pulse 2s infinite; }
-
-        /* ── Widget grid ────────────────────────────── */
+        /* ── Drag & Drop ─────────────────────────────────────────────── */
         .widget-col { position: relative; }
+        #widget-grid .card { min-height: 90px; }
 
+        /* Drag handle — top-left, visible on hover */
+        .drag-handle {
+            position: absolute;
+            top: 10px; left: 12px;
+            color: var(--text-muted);
+            opacity: 0;
+            cursor: grab;
+            font-size: 1.05rem;
+            line-height: 1;
+            z-index: 3;
+            padding: 2px 4px;
+            border-radius: 4px;
+            transition: opacity .15s;
+            user-select: none;
+        }
+        .widget-col:hover .drag-handle { opacity: .5; }
+        .drag-handle:hover { opacity: 1 !important; background: var(--bg-raised); }
+        .drag-handle:active { cursor: grabbing; }
+
+        /* Remove button — top-right */
         .btn-remove-widget {
             position: absolute;
-            top: 10px;
-            right: 12px;
-            background: none;
-            border: none;
+            top: 10px; right: 12px;
+            background: none; border: none;
             color: var(--text-muted);
-            cursor: pointer;
-            padding: 0 4px;
+            cursor: pointer; padding: 2px 5px;
             border-radius: 4px;
-            font-size: .95rem;
+            font-size: .88rem;
             line-height: 1;
-            z-index: 2;
+            z-index: 3;
             opacity: 0;
             transition: opacity .15s, background .15s;
         }
         .widget-col:hover .btn-remove-widget { opacity: 1; }
-        .btn-remove-widget:hover { background: rgba(218,54,51,.15); color: #da3633; }
+        .btn-remove-widget:hover { background: rgba(248,81,73,.15); color: #f85149; }
 
-        /* ── Add-widget modal ───────────────────────── */
-        .modal-content {
-            background: var(--bg-surface);
-            border: 1px solid var(--border);
-            color: var(--text);
+        /* Card content padding to avoid overlap with handle/btn */
+        .widget-inner { padding-top: 22px; }
+
+        /* Timestamp hint — bottom-right of each widget */
+        .widget-ts {
+            position: absolute;
+            bottom: 6px; right: 10px;
+            font-size: .6rem;
+            color: var(--text-muted);
+            opacity: .55;
         }
-        .modal-header { border-bottom: 1px solid var(--border); }
-        .modal-footer { border-top: 1px solid var(--border); }
+
+        /* SortableJS ghost & chosen */
+        .widget-ghost .card { opacity: .18; border: 2px dashed var(--accent) !important; background: transparent; }
+        .widget-chosen .card { box-shadow: 0 14px 40px rgba(0,0,0,.45); border-color: var(--accent) !important; }
+
+        /* ── Add-widget modal ─────────────────────────────────────────── */
+        .modal-content { background: var(--bg-surface); border: 1px solid var(--border); color: var(--text); }
+        .modal-header  { border-bottom: 1px solid var(--border); }
 
         .widget-type-card {
             cursor: pointer;
             border: 2px solid var(--border);
             border-radius: 8px;
-            padding: 14px 10px;
+            padding: 12px 8px;
             text-align: center;
-            transition: border-color .15s, background .15s, transform .1s;
+            transition: border-color .15s, transform .12s;
             background: var(--bg-raised);
         }
-        .widget-type-card:hover {
-            border-color: var(--accent);
-            background: var(--bg-surface);
-            transform: translateY(-2px);
-        }
-        .widget-type-card i { font-size: 1.5rem; }
-        .widget-type-card .wt-label { font-size: .78rem; font-weight: 600; margin-top: 6px; }
-        .widget-type-card .wt-desc  { font-size: .7rem;  color: var(--text-muted); margin-top: 2px; }
-
-        #widget-grid .card { min-height: 90px; }
-        #widget-empty { display: none; }
+        .widget-type-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+        .widget-type-card i   { font-size: 1.3rem; }
+        .wt-label { font-size: .75rem; font-weight: 600; margin-top: 5px; }
+        .wt-desc  { font-size: .65rem; color: var(--text-muted); margin-top: 2px; line-height: 1.3; }
     </style>
 </head>
 <body>
 
-<!-- Navbar -->
+<!-- ── Navbar ────────────────────────────────────────────────────────── -->
 <nav class="navbar px-3 mb-4">
     <span class="navbar-brand">
         <i class="bi bi-activity me-2 text-info"></i>Log Analyzer
     </span>
-    <div class="d-flex align-items-center gap-3 flex-wrap">
-        <span class="live-dot"></span>
-        <span class="text-muted small">Live</span>
+    <div class="d-flex align-items-center gap-2 flex-wrap">
 
-        <!-- Add widget -->
-        <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addWidgetModal"
-                style="font-size:.8rem;">
+        <!-- Global refresh status -->
+        <div class="d-flex align-items-center gap-2">
+            <span class="live-dot" id="normalDot"></span>
+            <span class="text-muted small" id="globalRefreshTs" style="min-width:120px;">Live</span>
+        </div>
+
+        <!-- Stream indicator (hidden until active) -->
+        <div id="streamIndicator" class="d-none d-flex align-items-center stream-pill">
+            <div class="live-dot"></div>
+            <span class="small fw-bold text-danger">LIVE</span>
+            <span class="small text-muted" id="streamCount">0 logs</span>
+        </div>
+
+        <!-- Add Widget -->
+        <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addWidgetModal" style="font-size:.8rem;">
             <i class="bi bi-plus-lg me-1"></i>Add Widget
         </button>
 
+        <!-- Stream toggle -->
+        <button class="btn btn-sm btn-outline-success" id="streamBtn" onclick="toggleStream()" style="font-size:.8rem;">
+            <i class="bi bi-broadcast me-1"></i>Start Stream
+        </button>
+
         <!-- Theme toggle -->
-        <label class="theme-toggle mb-0" title="Toggle light/dark theme">
-            <i class="bi bi-moon-stars-fill theme-icon" id="themeIconMoon"></i>
+        <label class="theme-toggle mb-0" title="Toggle theme">
+            <i class="bi bi-moon-stars-fill theme-icon"></i>
             <div class="form-check form-switch mb-0">
                 <input class="form-check-input" type="checkbox" id="themeToggle" onchange="toggleTheme(this)"/>
             </div>
-            <i class="bi bi-sun-fill theme-icon text-warning" id="themeIconSun"></i>
+            <i class="bi bi-sun-fill theme-icon text-warning"></i>
         </label>
 
-        <button class="btn btn-sm btn-outline-secondary demo-btn"
-                onclick="generateDemoLogs()"
-                title="Generate 50 sample log entries via Kafka">
-            <i class="bi bi-lightning-charge me-1"></i>Generate Demo Logs
+        <!-- Demo (one-shot) -->
+        <button class="btn btn-sm btn-outline-secondary" onclick="generateDemoOnce()" style="font-size:.8rem;">
+            <i class="bi bi-lightning-charge me-1"></i>Demo Logs
         </button>
 
-        <!-- User info + logout -->
+        <!-- User + logout -->
         <div class="d-flex align-items-center gap-2">
             <i class="bi bi-person-circle text-muted"></i>
-            <span class="text-muted small" sec:authentication="name">user@example.com</span>
+            <span class="text-muted small" sec:authentication="name">user</span>
             <form th:action="@{/logout}" method="post" class="mb-0">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                <button type="submit" class="btn btn-sm btn-outline-danger" style="font-size:.75rem; padding:2px 8px;">
+                <button type="submit" class="btn btn-sm btn-outline-danger" style="font-size:.75rem;padding:2px 8px;">
                     <i class="bi bi-box-arrow-right me-1"></i>Sign out
                 </button>
             </form>
@@ -216,11 +288,9 @@
 
 <div class="container-fluid px-4">
 
-    <!-- ── Dynamic Widget Grid ── -->
-    <div id="widget-grid" class="row g-3 mb-4">
-        <!-- Populated by JavaScript -->
-    </div>
-    <div id="widget-empty" class="text-center text-muted py-5 mb-4">
+    <!-- ── Widget Grid ─────────────────────────────────────────────── -->
+    <div id="widget-grid" class="row g-3 mb-4"></div>
+    <div id="widget-empty" class="text-center text-muted py-5 mb-4" style="display:none;">
         <i class="bi bi-grid fs-1 d-block mb-2 opacity-50"></i>
         <p class="mb-2">No widgets yet.</p>
         <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addWidgetModal">
@@ -228,10 +298,8 @@
         </button>
     </div>
 
-    <!-- ── Log table ── -->
+    <!-- ── Log table ──────────────────────────────────────────────── -->
     <div class="card p-3 mb-4">
-
-        <!-- Filter form -->
         <form method="get" th:action="@{/}" class="row g-2 mb-3 align-items-end">
             <div class="col-6 col-md-2">
                 <label class="form-label text-muted small mb-1">Level</label>
@@ -250,70 +318,53 @@
             </div>
             <div class="col-6 col-md-2">
                 <label class="form-label text-muted small mb-1">From</label>
-                <input type="datetime-local" name="from" class="form-control form-control-sm"
-                       th:value="${filter.from}"/>
+                <input type="datetime-local" name="from" class="form-control form-control-sm" th:value="${filter.from}"/>
             </div>
             <div class="col-6 col-md-2">
                 <label class="form-label text-muted small mb-1">To</label>
-                <input type="datetime-local" name="to" class="form-control form-control-sm"
-                       th:value="${filter.to}"/>
+                <input type="datetime-local" name="to" class="form-control form-control-sm" th:value="${filter.to}"/>
             </div>
             <div class="col-md-3">
                 <label class="form-label text-muted small mb-1">Search message</label>
-                <input type="text" name="q" class="form-control form-control-sm"
-                       placeholder="Full-text search..." th:value="${filter.q}"/>
+                <input type="text" name="q" class="form-control form-control-sm" placeholder="Full-text search..." th:value="${filter.q}"/>
             </div>
             <div class="col-6 col-md-1">
-                <button type="submit" class="btn btn-primary btn-sm w-100">
-                    <i class="bi bi-search"></i>
-                </button>
+                <button type="submit" class="btn btn-primary btn-sm w-100"><i class="bi bi-search"></i></button>
             </div>
             <div class="col-6 col-md-auto" th:if="${filter.level != null and filter.level != ''
                                                   or filter.service != null and filter.service != ''
                                                   or filter.from != null and filter.from != ''
                                                   or filter.to != null and filter.to != ''
                                                   or filter.q != null and filter.q != ''}">
-                <a th:href="@{/}" class="btn btn-outline-secondary btn-sm w-100">
-                    <i class="bi bi-x-lg"></i> Clear
-                </a>
+                <a th:href="@{/}" class="btn btn-outline-secondary btn-sm w-100"><i class="bi bi-x-lg"></i> Clear</a>
             </div>
         </form>
 
-        <!-- Result count -->
         <div class="text-muted small mb-2">
             <span th:text="${logs.totalElements}">0</span> entries found
             <span th:if="${logs.totalPages > 1}"
                   th:text="' — page ' + (${logs.number + 1}) + ' of ' + ${logs.totalPages}"></span>
         </div>
 
-        <!-- Table -->
         <div class="table-responsive">
             <table class="table table-sm mb-0">
-                <thead>
-                <tr>
+                <thead><tr>
                     <th style="width:155px">Timestamp (UTC)</th>
                     <th style="width:75px">Level</th>
                     <th style="width:150px">Service</th>
                     <th>Message</th>
                     <th style="width:140px">Trace ID</th>
                     <th style="width:90px">Host</th>
-                </tr>
-                </thead>
+                </tr></thead>
                 <tbody>
                 <tr th:if="${logs.empty}">
                     <td colspan="6" class="text-center text-muted py-5">
-                        <i class="bi bi-inbox fs-1 d-block mb-2"></i>
-                        No logs match the current filters
+                        <i class="bi bi-inbox fs-1 d-block mb-2"></i>No logs match the current filters
                     </td>
                 </tr>
                 <tr th:each="log : ${logs.content}">
-                    <td class="text-nowrap font-monospace small"
-                        th:text="${log.formattedTimestamp}"></td>
-                    <td>
-                        <span class="badge"
-                              th:classappend="'badge-' + ${log.level.name()}"
-                              th:text="${log.level.name()}"></span>
-                    </td>
+                    <td class="text-nowrap font-monospace small" th:text="${log.formattedTimestamp}"></td>
+                    <td><span class="badge" th:classappend="'badge-' + ${log.level.name()}" th:text="${log.level.name()}"></span></td>
                     <td class="small" th:text="${log.serviceName}"></td>
                     <td class="msg-cell" th:text="${log.message}" th:title="${log.message}"></td>
                     <td class="small text-muted font-monospace" th:text="${log.traceId}"></td>
@@ -323,50 +374,36 @@
             </table>
         </div>
 
-        <!-- Pagination -->
         <nav th:if="${logs.totalPages > 1}" class="mt-3 d-flex justify-content-center">
             <ul class="pagination pagination-sm mb-0">
-                <li class="page-item" th:classappend="${logs.first} ? 'disabled'">
-                    <a class="page-link"
-                       th:href="@{/(level=${filter.level},service=${filter.service},from=${filter.from},to=${filter.to},q=${filter.q},page=${logs.number - 1})}">
-                        <i class="bi bi-chevron-left"></i>
-                    </a>
+                <li class="page-item" th:classappend="${logs.first}?'disabled'">
+                    <a class="page-link" th:href="@{/(level=${filter.level},service=${filter.service},from=${filter.from},to=${filter.to},q=${filter.q},page=${logs.number-1})}"><i class="bi bi-chevron-left"></i></a>
                 </li>
-                <th:block th:each="i : ${#numbers.sequence(
-                        T(java.lang.Math).max(0, logs.number - 3),
-                        T(java.lang.Math).min(logs.totalPages - 1, logs.number + 3))}">
-                    <li class="page-item" th:classappend="${i == logs.number} ? 'active'">
+                <th:block th:each="i:${#numbers.sequence(T(java.lang.Math).max(0,logs.number-3),T(java.lang.Math).min(logs.totalPages-1,logs.number+3))}">
+                    <li class="page-item" th:classappend="${i==logs.number}?'active'">
                         <a class="page-link"
                            th:href="@{/(level=${filter.level},service=${filter.service},from=${filter.from},to=${filter.to},q=${filter.q},page=${i})}"
-                           th:text="${i + 1}"></a>
+                           th:text="${i+1}"></a>
                     </li>
                 </th:block>
-                <li class="page-item" th:classappend="${logs.last} ? 'disabled'">
-                    <a class="page-link"
-                       th:href="@{/(level=${filter.level},service=${filter.service},from=${filter.from},to=${filter.to},q=${filter.q},page=${logs.number + 1})}">
-                        <i class="bi bi-chevron-right"></i>
-                    </a>
+                <li class="page-item" th:classappend="${logs.last}?'disabled'">
+                    <a class="page-link" th:href="@{/(level=${filter.level},service=${filter.service},from=${filter.from},to=${filter.to},q=${filter.q},page=${logs.number+1})}"><i class="bi bi-chevron-right"></i></a>
                 </li>
             </ul>
         </nav>
     </div>
 </div>
 
-<!-- ── Add Widget Modal ─────────────────────────────────────────── -->
-<div class="modal fade" id="addWidgetModal" tabindex="-1" aria-labelledby="addWidgetModalLabel" aria-hidden="true">
+<!-- ── Add Widget Modal ──────────────────────────────────────────────── -->
+<div class="modal fade" id="addWidgetModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="addWidgetModalLabel">
-                    <i class="bi bi-grid me-2"></i>Add Widget
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"
-                        style="filter: var(--btn-close-filter, none);"></button>
+                <h5 class="modal-title"><i class="bi bi-grid me-2"></i>Add Widget</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <div class="row g-2" id="widgetTypeGrid">
-                    <!-- Populated by JS -->
-                </div>
+                <div class="row g-2" id="widgetTypeGrid"></div>
             </div>
         </div>
     </div>
@@ -374,358 +411,553 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
-
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.3/Sortable.min.js"></script>
 <script>
-    // ── Theme helpers ────────────────────────────────────────────────
-    function isDark() {
-        return document.documentElement.getAttribute('data-bs-theme') === 'dark';
-    }
-
-    function chartColors() {
-        const dark = isDark();
-        return {
-            grid:     dark ? '#21262d' : '#e8ecef',
-            tick:     dark ? '#8b949e' : '#656d76',
-            legend:   dark ? '#8b949e' : '#656d76',
-            border:   dark ? '#161b22' : '#ffffff',
-            line:     dark ? '#58a6ff' : '#0969da',
-            lineFill: dark ? 'rgba(88,166,255,0.08)' : 'rgba(9,105,218,0.08)',
-        };
-    }
-
-    // Map: widgetId → Chart instance
-    const chartInstances = new Map();
-
-    function applyAllChartThemes() {
-        const c = chartColors();
-        chartInstances.forEach(chart => {
-            if (!chart) return;
-            if (chart.options.plugins?.legend?.labels) {
-                chart.options.plugins.legend.labels.color = c.legend;
-            }
-            if (chart.options.scales) {
-                Object.values(chart.options.scales).forEach(axis => {
-                    if (axis.ticks) axis.ticks.color = c.tick;
-                    if (axis.grid)  axis.grid.color  = c.grid;
-                });
-            }
-            // Update dataset colors for line charts
-            const ds = chart.data.datasets[0];
-            if (ds && chart.config.type === 'line') {
-                ds.borderColor     = c.line;
-                ds.backgroundColor = c.lineFill;
-            }
-            // Update doughnut border color
-            if (chart.config.type === 'doughnut' && ds) {
-                ds.borderColor = c.border;
-            }
-            chart.update();
-        });
-    }
-
-    function toggleTheme(checkbox) {
-        const theme = checkbox.checked ? 'light' : 'dark';
-        document.documentElement.setAttribute('data-bs-theme', theme);
-        localStorage.setItem('la-theme', theme);
-        applyAllChartThemes();
-    }
-
-    window.addEventListener('DOMContentLoaded', () => {
-        document.getElementById('themeToggle').checked = !isDark();
-        initAddWidgetModal();
-        loadDashboard();
-    });
-
-    // ── Widget definitions ───────────────────────────────────────────
-    const WIDGET_DEFS = {
-        STAT_TOTAL:      { label: 'Total Logs',    icon: 'bi-layers',              desc: 'Total log entries count',      colClass: 'col-md-3' },
-        STAT_ERRORS:     { label: 'Error Count',   icon: 'bi-x-circle',            desc: 'Number of ERROR level logs',   colClass: 'col-md-3' },
-        STAT_WARNS:      { label: 'Warnings',      icon: 'bi-exclamation-triangle', desc: 'Number of WARN level logs',    colClass: 'col-md-3' },
-        STAT_ERROR_RATE: { label: 'Error Rate',    icon: 'bi-graph-up-arrow',      desc: 'Error rate in the last hour',  colClass: 'col-md-3' },
-        CHART_LEVEL:     { label: 'Level Chart',   icon: 'bi-pie-chart',           desc: 'Distribution by log level',    colClass: 'col-md-4' },
-        CHART_TIMELINE:  { label: 'Timeline',      icon: 'bi-bar-chart-line',      desc: 'Log volume over last 24 h',    colClass: 'col-md-8' },
-        CHART_SERVICES:  { label: 'Top Services',  icon: 'bi-diagram-3',           desc: 'Most active microservices',    colClass: 'col-md-6' },
-        TABLE_RECENT:    { label: 'Recent Logs',   icon: 'bi-table',               desc: 'Last 10 log entries',          colClass: 'col-md-12' },
+// ════════════════════════════════════════════════════════════════════
+// Theme
+// ════════════════════════════════════════════════════════════════════
+function isDark() { return document.documentElement.getAttribute('data-bs-theme') === 'dark'; }
+function chartColors() {
+    const d = isDark();
+    return {
+        grid:     d ? '#21262d' : '#e8ecef',
+        tick:     d ? '#8b949e' : '#6a737d',
+        legend:   d ? '#8b949e' : '#6a737d',
+        border:   d ? '#161b22' : '#ffffff',
+        line:     d ? '#58a6ff' : '#0969da',
+        lineFill: d ? 'rgba(88,166,255,.07)' : 'rgba(9,105,218,.07)',
     };
+}
+function toggleTheme(cb) {
+    const t = cb.checked ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-bs-theme', t);
+    localStorage.setItem('la-theme', t);
+    applyAllChartThemes();
+}
 
-    const SIZE_CLASS = { SMALL: 'col-md-3', MEDIUM: 'col-md-4', LARGE: 'col-md-8', FULL: 'col-md-12' };
+// ════════════════════════════════════════════════════════════════════
+// State
+// ════════════════════════════════════════════════════════════════════
+const chartInstances = new Map();  // widgetId → Chart
+const widgetRegistry  = new Map();  // widgetId → widget object
+let   metricsCache    = null;
 
-    function colClass(widget) {
-        return SIZE_CLASS[widget.size] || (WIDGET_DEFS[widget.type]?.colClass ?? 'col-md-6');
-    }
+// ════════════════════════════════════════════════════════════════════
+// Widget catalogue (shown in modal)
+// ════════════════════════════════════════════════════════════════════
+const WIDGET_DEFS = {
+    STAT_TOTAL:     { label:'Total Logs',       icon:'bi-layers',               desc:'All-time log count',           col:'col-6 col-md-3' },
+    STAT_ERRORS:    { label:'Error Count',       icon:'bi-x-circle',             desc:'ERROR level log count',        col:'col-6 col-md-3' },
+    STAT_WARNS:     { label:'Warnings',          icon:'bi-exclamation-triangle',  desc:'WARN level log count',         col:'col-6 col-md-3' },
+    STAT_ERROR_RATE:{ label:'Error Rate',        icon:'bi-graph-up-arrow',       desc:'% errors in the last hour',    col:'col-6 col-md-3' },
+    STAT_INFOS:     { label:'Info Logs',         icon:'bi-info-circle',          desc:'INFO level log count',         col:'col-6 col-md-3' },
+    STAT_LAST_HOUR: { label:'Last Hour',         icon:'bi-clock-history',        desc:'Logs received in last hour',   col:'col-6 col-md-3' },
+    STAT_SERVICES:  { label:'Services',          icon:'bi-hdd-network',          desc:'Distinct services emitting',   col:'col-6 col-md-3' },
+    CHART_LEVEL:    { label:'Level Doughnut',    icon:'bi-pie-chart',            desc:'Log distribution by level',    col:'col-md-4' },
+    CHART_TIMELINE: { label:'Timeline',          icon:'bi-bar-chart-line',       desc:'Log volume over last 24 h',    col:'col-md-8' },
+    CHART_SERVICES: { label:'Top Services',      icon:'bi-diagram-3',            desc:'Most active microservices',    col:'col-md-6' },
+    CHART_LEVEL_BAR:{ label:'Level Bar Chart',   icon:'bi-bar-chart-steps',      desc:'Level counts as bar chart',    col:'col-md-6' },
+    TABLE_RECENT:   { label:'Recent Logs',       icon:'bi-table',                desc:'Last 10 log entries',          col:'col-md-12' },
+    TABLE_ERRORS:   { label:'Recent Errors',     icon:'bi-bug',                  desc:'Last 10 ERROR log entries',    col:'col-md-12' },
+};
 
-    // ── Add-widget modal ─────────────────────────────────────────────
-    function initAddWidgetModal() {
-        const grid = document.getElementById('widgetTypeGrid');
-        grid.innerHTML = Object.entries(WIDGET_DEFS).map(([type, def]) => `
+// Size → Bootstrap col class
+const SIZE_CLASS = {
+    SMALL:  'col-6 col-md-3',
+    MEDIUM: 'col-md-4',
+    LARGE:  'col-md-8',
+    FULL:   'col-md-12',
+};
+function colClass(w) { return SIZE_CLASS[w.size] || WIDGET_DEFS[w.type]?.col || 'col-md-6'; }
+
+const STAT_TYPES  = new Set(['STAT_TOTAL','STAT_ERRORS','STAT_WARNS','STAT_ERROR_RATE','STAT_INFOS','STAT_LAST_HOUR','STAT_SERVICES']);
+const CHART_TYPES = new Set(['CHART_LEVEL','CHART_TIMELINE','CHART_SERVICES','CHART_LEVEL_BAR']);
+const TABLE_TYPES = new Set(['TABLE_RECENT','TABLE_ERRORS']);
+const TABLE_URL   = { TABLE_RECENT:'/api/logs?size=10', TABLE_ERRORS:'/api/logs?size=10&level=ERROR' };
+
+const LEVEL_COLORS = { DEBUG:'#6c757d', INFO:'#1f6feb', WARN:'#d29922', ERROR:'#da3633' };
+const BADGE_CLASS  = { DEBUG:'badge-DEBUG', INFO:'badge-INFO', WARN:'badge-WARN', ERROR:'badge-ERROR' };
+
+// ════════════════════════════════════════════════════════════════════
+// Init
+// ════════════════════════════════════════════════════════════════════
+window.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('themeToggle').checked = !isDark();
+    buildAddWidgetModal();
+    loadDashboard();
+    startPeriodicRefresh();
+});
+
+function buildAddWidgetModal() {
+    document.getElementById('widgetTypeGrid').innerHTML =
+        Object.entries(WIDGET_DEFS).map(([type, d]) => `
             <div class="col-6 col-md-3">
                 <div class="widget-type-card" onclick="addWidget('${type}')">
-                    <i class="bi ${def.icon} text-primary"></i>
-                    <div class="wt-label">${def.label}</div>
-                    <div class="wt-desc">${def.desc}</div>
+                    <i class="bi ${d.icon} text-primary"></i>
+                    <div class="wt-label">${d.label}</div>
+                    <div class="wt-desc">${d.desc}</div>
+                </div>
+            </div>`).join('');
+}
+
+// ════════════════════════════════════════════════════════════════════
+// Load / render
+// ════════════════════════════════════════════════════════════════════
+async function loadDashboard() {
+    const [metrics, widgets] = await Promise.all([
+        fetch('/api/metrics/summary').then(r => r.json()),
+        fetch('/api/widgets').then(r => r.json()),
+    ]).catch(e => { console.error(e); return [{}, []]; });
+
+    metricsCache = metrics;
+    renderAllWidgets(widgets, metrics);
+}
+
+function renderAllWidgets(widgets, metrics) {
+    const grid  = document.getElementById('widget-grid');
+    const empty = document.getElementById('widget-empty');
+    chartInstances.forEach(c => c.destroy());
+    chartInstances.clear();
+    widgetRegistry.clear();
+    grid.innerHTML = '';
+
+    if (!widgets?.length) { empty.style.display = 'block'; return; }
+    empty.style.display = 'none';
+
+    widgets.forEach(w => {
+        widgetRegistry.set(w.id, w);
+        grid.appendChild(buildWidgetShell(w));
+        renderWidgetContent(w, metrics);
+    });
+
+    initSortable();
+}
+
+// ════════════════════════════════════════════════════════════════════
+// Widget shell (drag handle + remove btn + content slot)
+// ════════════════════════════════════════════════════════════════════
+function buildWidgetShell(widget) {
+    const col = document.createElement('div');
+    col.className = `${colClass(widget)} widget-col`;
+    col.dataset.widgetId = widget.id;
+    col.innerHTML = `
+        <div class="card p-3 h-100 position-relative">
+            <div class="drag-handle" title="Drag to reorder">
+                <i class="bi bi-grip-vertical"></i>
+            </div>
+            <button class="btn-remove-widget" onclick="removeWidget(${widget.id})" title="Remove widget">
+                <i class="bi bi-x-lg"></i>
+            </button>
+            <div class="widget-inner" id="wc-${widget.id}">
+                <div class="text-center text-muted py-4">
+                    <div class="spinner-border spinner-border-sm"></div>
                 </div>
             </div>
-        `).join('');
+            <div class="widget-ts" id="wts-${widget.id}"></div>
+        </div>`;
+    return col;
+}
+
+// ════════════════════════════════════════════════════════════════════
+// Per-type renderers
+// ════════════════════════════════════════════════════════════════════
+function renderWidgetContent(widget, metrics) {
+    const el = document.getElementById(`wc-${widget.id}`);
+    if (!el) return;
+
+    switch (widget.type) {
+        case 'STAT_TOTAL':
+            stat(el, widget, fmt(metrics.totalLogs ?? 0), 'bi-layers', 'si-primary', 'All time'); break;
+        case 'STAT_ERRORS':
+            stat(el, widget, fmt(metrics.countByLevel?.ERROR ?? 0), 'bi-x-circle', 'si-danger', '24 h'); break;
+        case 'STAT_WARNS':
+            stat(el, widget, fmt(metrics.countByLevel?.WARN ?? 0), 'bi-exclamation-triangle', 'si-warning', '24 h'); break;
+        case 'STAT_ERROR_RATE':
+            stat(el, widget, (metrics.errorRate ?? 0).toFixed(1) + '%', 'bi-graph-up-arrow', 'si-info', 'Last hour'); break;
+        case 'STAT_INFOS':
+            stat(el, widget, fmt(metrics.countByLevel?.INFO ?? 0), 'bi-info-circle', 'si-primary', '24 h'); break;
+        case 'STAT_LAST_HOUR':
+            stat(el, widget, fmt(metrics.logsLastHour ?? 0), 'bi-clock-history', 'si-success', 'Last hour'); break;
+        case 'STAT_SERVICES':
+            stat(el, widget, fmt(metrics.servicesCount ?? 0), 'bi-hdd-network', 'si-purple', 'Active'); break;
+        case 'CHART_LEVEL':      chartDoughnut(el, widget, metrics.countByLevel ?? {}); break;
+        case 'CHART_LEVEL_BAR':  chartLevelBar(el, widget, metrics.countByLevel ?? {}); break;
+        case 'CHART_TIMELINE':   chartTimeline(el, widget, metrics.timeSeriesData ?? []); break;
+        case 'CHART_SERVICES':   chartServices(el, widget, metrics.topServices ?? []); break;
+        case 'TABLE_RECENT': case 'TABLE_ERRORS':
+            tableLog(el, widget, TABLE_URL[widget.type]); break;
+        default:
+            el.innerHTML = `<span class="text-muted small">Unknown: ${widget.type}</span>`;
     }
+    markUpdated(widget.id);
+}
 
-    // ── Dashboard load ───────────────────────────────────────────────
-    async function loadDashboard() {
-        const [metrics, widgets] = await Promise.all([
-            fetch('/api/metrics/summary').then(r => r.json()),
-            fetch('/api/widgets').then(r => r.json()),
-        ]).catch(err => { console.error('Failed to load dashboard data', err); return [{}, []]; });
+// ── Stat card ─────────────────────────────────────────────────────────
+function stat(el, widget, value, icon, iconCls, sub) {
+    el.innerHTML = `
+        <div class="d-flex align-items-start justify-content-between gap-2">
+            <div class="overflow-hidden flex-grow-1">
+                <div class="stat-label">${widget.title}</div>
+                <div class="stat-value" id="stat-val-${widget.id}">${value}</div>
+                <div class="stat-sub">${sub}</div>
+            </div>
+            <div class="stat-icon-wrap ${iconCls} mt-1">
+                <i class="bi ${icon}"></i>
+            </div>
+        </div>`;
+}
 
-        renderAllWidgets(widgets, metrics);
-    }
+// ── Doughnut ──────────────────────────────────────────────────────────
+function chartDoughnut(el, widget, byLevel) {
+    el.innerHTML = `
+        <div class="widget-title"><i class="bi bi-pie-chart me-1"></i>${widget.title}</div>
+        <div class="chart-wrap"><canvas id="cv-${widget.id}"></canvas></div>`;
+    const labels = Object.keys(byLevel), values = Object.values(byLevel), c = chartColors();
+    const chart = new Chart(document.getElementById(`cv-${widget.id}`), {
+        type: 'doughnut',
+        data: { labels, datasets: [{ data: values, backgroundColor: labels.map(l => LEVEL_COLORS[l] ?? '#6c757d'), borderColor: c.border, borderWidth: 3, hoverOffset: 6 }] },
+        options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'bottom', labels:{ color:c.legend, padding:10, font:{size:11} } } } }
+    });
+    chartInstances.set(widget.id, chart);
+}
 
-    function renderAllWidgets(widgets, metrics) {
-        const grid = document.getElementById('widget-grid');
-        const empty = document.getElementById('widget-empty');
-        grid.innerHTML = '';
+// ── Level Bar ─────────────────────────────────────────────────────────
+function chartLevelBar(el, widget, byLevel) {
+    el.innerHTML = `
+        <div class="widget-title"><i class="bi bi-bar-chart-steps me-1"></i>${widget.title}</div>
+        <div class="chart-wrap"><canvas id="cv-${widget.id}"></canvas></div>`;
+    const labels = Object.keys(byLevel), values = Object.values(byLevel), c = chartColors();
+    const chart = new Chart(document.getElementById(`cv-${widget.id}`), {
+        type: 'bar',
+        data: { labels, datasets: [{ data: values, backgroundColor: labels.map(l => LEVEL_COLORS[l] ?? '#6c757d'), borderRadius: 5, borderSkipped: false }] },
+        options: { responsive:true, maintainAspectRatio:false,
+            scales:{ x:{ ticks:{ color:c.tick }, grid:{ color:c.grid } }, y:{ beginAtZero:true, ticks:{ precision:0, color:c.tick }, grid:{ color:c.grid } } },
+            plugins:{ legend:{ display:false } } }
+    });
+    chartInstances.set(widget.id, chart);
+}
 
-        if (!widgets || widgets.length === 0) {
-            empty.style.display = 'block';
-            return;
+// ── Timeline ──────────────────────────────────────────────────────────
+function chartTimeline(el, widget, ts) {
+    el.innerHTML = `
+        <div class="widget-title"><i class="bi bi-bar-chart-line me-1"></i>${widget.title}</div>
+        <div class="chart-wrap"><canvas id="cv-${widget.id}"></canvas></div>`;
+    const c = chartColors();
+    const chart = new Chart(document.getElementById(`cv-${widget.id}`), {
+        type: 'line',
+        data: { labels: ts.map(p => p.label), datasets: [{ label:'Logs', data: ts.map(p => p.count), borderColor:c.line, backgroundColor:c.lineFill, fill:true, tension:.35, pointRadius:3, pointHoverRadius:5 }] },
+        options: { responsive:true, maintainAspectRatio:false,
+            scales:{ x:{ ticks:{ maxTicksLimit:12, font:{size:10}, color:c.tick }, grid:{ color:c.grid } }, y:{ beginAtZero:true, ticks:{ precision:0, font:{size:10}, color:c.tick }, grid:{ color:c.grid } } },
+            plugins:{ legend:{ display:false } } }
+    });
+    chartInstances.set(widget.id, chart);
+}
+
+// ── Services Bar (horizontal) ─────────────────────────────────────────
+function chartServices(el, widget, svcs) {
+    el.innerHTML = `
+        <div class="widget-title"><i class="bi bi-diagram-3 me-1"></i>${widget.title}</div>
+        <div class="chart-wrap"><canvas id="cv-${widget.id}"></canvas></div>`;
+    const c = chartColors();
+    const chart = new Chart(document.getElementById(`cv-${widget.id}`), {
+        type: 'bar',
+        data: { labels: svcs.map(s => s.serviceName), datasets: [{ data: svcs.map(s => s.count), backgroundColor:'rgba(88,166,255,.65)', borderColor:'#58a6ff', borderWidth:1, borderRadius:4 }] },
+        options: { responsive:true, maintainAspectRatio:false, indexAxis:'y',
+            scales:{ x:{ beginAtZero:true, ticks:{ precision:0, color:c.tick }, grid:{ color:c.grid } }, y:{ ticks:{ color:c.tick, font:{size:10} }, grid:{ display:false } } },
+            plugins:{ legend:{ display:false } } }
+    });
+    chartInstances.set(widget.id, chart);
+}
+
+// ── Log Table ─────────────────────────────────────────────────────────
+async function tableLog(el, widget, url) {
+    el.innerHTML = `
+        <div class="widget-title"><i class="bi bi-table me-1"></i>${widget.title}</div>
+        <div class="text-center py-3"><div class="spinner-border spinner-border-sm text-muted"></div></div>`;
+
+    const data = await fetch(url).then(r => r.json()).catch(() => ({ content:[] }));
+    const logs  = data.content ?? [];
+
+    const rows = !logs.length
+        ? '<tr><td colspan="4" class="text-center text-muted py-4"><i class="bi bi-inbox"></i> No entries</td></tr>'
+        : logs.map(log => `<tr>
+            <td class="font-monospace small text-nowrap">${log.formattedTimestamp ?? ''}</td>
+            <td><span class="badge ${BADGE_CLASS[log.level] ?? 'badge-DEBUG'}">${log.level ?? ''}</span></td>
+            <td class="small">${esc(log.serviceName ?? '')}</td>
+            <td class="small msg-cell" title="${esc(log.message ?? '')}">${esc(log.message ?? '')}</td>
+          </tr>`).join('');
+
+    el.innerHTML = `
+        <div class="widget-title"><i class="bi bi-table me-1"></i>${widget.title}</div>
+        <div class="table-responsive">
+          <table class="table table-sm mb-0">
+            <thead><tr><th>Timestamp</th><th>Level</th><th>Service</th><th>Message</th></tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>`;
+}
+
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function fmt(n) { return Number(n).toLocaleString(); }
+
+// ════════════════════════════════════════════════════════════════════
+// Drag & Drop (SortableJS)
+// ════════════════════════════════════════════════════════════════════
+let sortable = null;
+
+function initSortable() {
+    if (sortable) sortable.destroy();
+    sortable = Sortable.create(document.getElementById('widget-grid'), {
+        animation: 200,
+        ghostClass: 'widget-ghost',
+        chosenClass: 'widget-chosen',
+        handle: '.drag-handle',
+        delay: 0,
+        delayOnTouchOnly: true,
+        touchStartThreshold: 4,
+        onEnd: saveWidgetOrder,
+    });
+}
+
+async function saveWidgetOrder() {
+    const ids = [...document.querySelectorAll('#widget-grid [data-widget-id]')]
+        .map(el => Number(el.dataset.widgetId));
+    await fetch('/api/widgets/order', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(ids),
+    }).catch(e => console.warn('Order save failed', e));
+}
+
+// ════════════════════════════════════════════════════════════════════
+// Periodic background refresh  (normal mode)
+// ════════════════════════════════════════════════════════════════════
+function startPeriodicRefresh() {
+    setInterval(refreshStatsOnly,       20_000);   // stats every 20 s
+    setInterval(refreshChartsAndTables, 60_000);   // charts/tables every 60 s
+}
+
+async function refreshStatsOnly() {
+    try {
+        const m = await fetch('/api/metrics/summary').then(r => r.json());
+        metricsCache = m;
+        widgetRegistry.forEach((w, id) => { if (STAT_TYPES.has(w.type)) updateStatInPlace(w, m); });
+        document.getElementById('globalRefreshTs').textContent =
+            'Updated ' + new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+    } catch(e) {}
+}
+
+async function refreshChartsAndTables() {
+    if (!metricsCache) return;
+    widgetRegistry.forEach((w, id) => {
+        if (CHART_TYPES.has(w.type)) { updateChartInPlace(w, metricsCache); markUpdated(id); }
+        if (TABLE_TYPES.has(w.type)) {
+            const el = document.getElementById(`wc-${id}`);
+            if (el) tableLog(el, w, TABLE_URL[w.type]).then(() => markUpdated(id));
         }
-        empty.style.display = 'none';
+    });
+}
 
-        for (const widget of widgets) {
-            const col = buildWidgetShell(widget);
-            grid.appendChild(col);
-            renderWidgetContent(widget, metrics);
+// ── Stat in-place update (no re-render, just flash the number) ────────
+function updateStatInPlace(widget, m) {
+    const span = document.getElementById(`stat-val-${widget.id}`);
+    if (!span) return;
+    let v;
+    switch (widget.type) {
+        case 'STAT_TOTAL':      v = fmt(m.totalLogs ?? 0); break;
+        case 'STAT_ERRORS':     v = fmt(m.countByLevel?.ERROR ?? 0); break;
+        case 'STAT_WARNS':      v = fmt(m.countByLevel?.WARN ?? 0); break;
+        case 'STAT_ERROR_RATE': v = (m.errorRate ?? 0).toFixed(1) + '%'; break;
+        case 'STAT_INFOS':      v = fmt(m.countByLevel?.INFO ?? 0); break;
+        case 'STAT_LAST_HOUR':  v = fmt(m.logsLastHour ?? 0); break;
+        case 'STAT_SERVICES':   v = fmt(m.servicesCount ?? 0); break;
+        default: return;
+    }
+    if (span.textContent !== v) {
+        span.textContent = v;
+        span.classList.remove('val-flash');
+        void span.offsetWidth;
+        span.classList.add('val-flash');
+        markUpdated(widget.id);
+    }
+}
+
+// ── Chart in-place data update ────────────────────────────────────────
+function updateChartInPlace(widget, m) {
+    const chart = chartInstances.get(widget.id);
+    if (!chart) return;
+    const ds = chart.data.datasets[0];
+    switch (widget.type) {
+        case 'CHART_LEVEL': case 'CHART_LEVEL_BAR': {
+            const cl = m.countByLevel ?? {};
+            chart.data.labels = Object.keys(cl);
+            ds.data = Object.values(cl);
+            break;
+        }
+        case 'CHART_TIMELINE': {
+            const ts = m.timeSeriesData ?? [];
+            chart.data.labels = ts.map(p => p.label);
+            ds.data = ts.map(p => p.count);
+            break;
+        }
+        case 'CHART_SERVICES': {
+            const sv = m.topServices ?? [];
+            chart.data.labels = sv.map(s => s.serviceName);
+            ds.data = sv.map(s => s.count);
+            break;
         }
     }
+    chart.update('active');
+}
 
-    function buildWidgetShell(widget) {
-        const col = document.createElement('div');
-        col.className = `${colClass(widget)} widget-col`;
-        col.dataset.widgetId = widget.id;
-        col.innerHTML = `
-            <div class="card p-3 h-100 position-relative">
-                <button class="btn-remove-widget" onclick="removeWidget(${widget.id})" title="Remove widget">
-                    <i class="bi bi-x-lg"></i>
-                </button>
-                <div id="wc-${widget.id}">
-                    <div class="text-center text-muted py-4">
-                        <div class="spinner-border spinner-border-sm" role="status"></div>
-                    </div>
-                </div>
-            </div>`;
-        return col;
-    }
-
-    function renderWidgetContent(widget, metrics) {
-        const el = document.getElementById(`wc-${widget.id}`);
-        if (!el) return;
-
-        switch (widget.type) {
-            case 'STAT_TOTAL':
-                renderStat(el, widget, metrics.totalLogs ?? 0, 'bi-layers', 'text-primary');
-                break;
-            case 'STAT_ERRORS':
-                renderStat(el, widget, metrics.countByLevel?.ERROR ?? 0, 'bi-x-circle', 'text-danger');
-                break;
-            case 'STAT_WARNS':
-                renderStat(el, widget, metrics.countByLevel?.WARN ?? 0, 'bi-exclamation-triangle', 'text-warning');
-                break;
-            case 'STAT_ERROR_RATE':
-                renderStat(el, widget, (metrics.errorRate ?? 0).toFixed(1) + '%', 'bi-graph-up-arrow', 'text-info');
-                break;
-            case 'CHART_LEVEL':
-                renderLevelChart(el, widget, metrics.countByLevel ?? {});
-                break;
-            case 'CHART_TIMELINE':
-                renderTimelineChart(el, widget, metrics.timeSeriesData ?? []);
-                break;
-            case 'CHART_SERVICES':
-                renderServicesChart(el, widget, metrics.topServices ?? []);
-                break;
-            case 'TABLE_RECENT':
-                renderRecentTable(el, widget);
-                break;
-            default:
-                el.innerHTML = `<div class="text-muted small">Unknown widget type: ${widget.type}</div>`;
+function applyAllChartThemes() {
+    const c = chartColors();
+    chartInstances.forEach(chart => {
+        if (chart.options.plugins?.legend?.labels) chart.options.plugins.legend.labels.color = c.legend;
+        if (chart.options.scales) Object.values(chart.options.scales).forEach(ax => {
+            if (ax.ticks) ax.ticks.color = c.tick;
+            if (ax.grid)  ax.grid.color  = c.grid;
+        });
+        const ds = chart.data.datasets[0];
+        if (ds) {
+            if (chart.config.type === 'line')     { ds.borderColor = c.line; ds.backgroundColor = c.lineFill; }
+            if (chart.config.type === 'doughnut') { ds.borderColor = c.border; }
         }
-    }
+        chart.update();
+    });
+}
 
-    // ── Widget renderers ─────────────────────────────────────────────
+function markUpdated(id) {
+    const el = document.getElementById(`wts-${id}`);
+    if (el) el.textContent = new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+}
 
-    function renderStat(el, widget, value, icon, colorClass) {
-        el.innerHTML = `
-            <div class="d-flex align-items-center gap-3">
-                <i class="bi ${icon} stat-icon ${colorClass}"></i>
-                <div>
-                    <div class="text-muted small mb-1">${widget.title}</div>
-                    <div class="stat-value ${colorClass}">${value}</div>
-                </div>
-            </div>`;
-    }
+// ════════════════════════════════════════════════════════════════════
+// Live Stream Mode  ▶ generates logs continuously, refreshes widgets
+// ════════════════════════════════════════════════════════════════════
+let streamActive    = false;
+let streamTimer     = null;   // setTimeout handle for next log batch
+let streamChartInt  = null;   // setInterval handle for chart refresh
+let streamLogCount  = 0;
 
-    function renderLevelChart(el, widget, countByLevel) {
-        el.innerHTML = `
-            <h6 class="mb-3 text-muted"><i class="bi bi-pie-chart me-1"></i>${widget.title}</h6>
-            <div class="chart-wrap"><canvas id="cv-${widget.id}"></canvas></div>`;
+function toggleStream() { streamActive ? stopStream() : startStream(); }
 
-        const LEVEL_COLORS = { DEBUG: '#6c757d', INFO: '#1f6feb', WARN: '#d29922', ERROR: '#da3633' };
-        const labels = Object.keys(countByLevel);
-        const values = Object.values(countByLevel);
-        const colors = labels.map(l => LEVEL_COLORS[l] ?? '#6c757d');
-        const c = chartColors();
+function startStream() {
+    streamActive   = true;
+    streamLogCount = 0;
+    updateStreamUI();
 
-        const chart = new Chart(document.getElementById(`cv-${widget.id}`), {
-            type: 'doughnut',
-            data: {
-                labels,
-                datasets: [{ data: values, backgroundColor: colors, borderColor: c.border, borderWidth: 3, hoverOffset: 6 }]
-            },
-            options: {
-                responsive: true, maintainAspectRatio: false,
-                plugins: { legend: { position: 'bottom', labels: { color: c.legend, padding: 12, font: { size: 12 } } } }
+    const generateCycle = async () => {
+        if (!streamActive) return;
+        const count = Math.floor(Math.random() * 3) + 1;   // 1-3 logs per tick
+        try {
+            await fetch(`/api/demo/generate?count=${count}`, { method:'POST' });
+            streamLogCount += count;
+            document.getElementById('streamCount').textContent = streamLogCount + ' logs';
+        } catch(e) { /* ignore */ }
+
+        // Refresh stats immediately after new logs arrive
+        const m = await fetch('/api/metrics/summary').then(r => r.json()).catch(() => metricsCache);
+        if (m) {
+            metricsCache = m;
+            widgetRegistry.forEach((w, id) => {
+                if (STAT_TYPES.has(w.type)) updateStatInPlace(w, m);
+            });
+        }
+
+        // Refresh table widgets immediately (they show the latest rows)
+        widgetRegistry.forEach((w, id) => {
+            if (TABLE_TYPES.has(w.type)) {
+                const el = document.getElementById(`wc-${id}`);
+                if (el) tableLog(el, w, TABLE_URL[w.type]).then(() => markUpdated(id));
             }
         });
-        chartInstances.set(widget.id, chart);
-    }
 
-    function renderTimelineChart(el, widget, timeSeriesData) {
-        el.innerHTML = `
-            <h6 class="mb-3 text-muted"><i class="bi bi-bar-chart-line me-1"></i>${widget.title}</h6>
-            <div class="chart-wrap"><canvas id="cv-${widget.id}"></canvas></div>`;
-
-        const labels = timeSeriesData.map(p => p.label);
-        const values = timeSeriesData.map(p => p.count);
-        const c = chartColors();
-
-        const chart = new Chart(document.getElementById(`cv-${widget.id}`), {
-            type: 'line',
-            data: {
-                labels,
-                datasets: [{
-                    label: 'Log count', data: values,
-                    borderColor: c.line, backgroundColor: c.lineFill,
-                    fill: true, tension: 0.35, pointRadius: 3, pointHoverRadius: 5
-                }]
-            },
-            options: {
-                responsive: true, maintainAspectRatio: false,
-                scales: {
-                    x: { ticks: { maxTicksLimit: 12, font: { size: 11 }, color: c.tick }, grid: { color: c.grid } },
-                    y: { beginAtZero: true, ticks: { precision: 0, font: { size: 11 }, color: c.tick }, grid: { color: c.grid } }
-                },
-                plugins: { legend: { display: false } }
-            }
-        });
-        chartInstances.set(widget.id, chart);
-    }
-
-    function renderServicesChart(el, widget, topServices) {
-        el.innerHTML = `
-            <h6 class="mb-3 text-muted"><i class="bi bi-diagram-3 me-1"></i>${widget.title}</h6>
-            <div class="chart-wrap"><canvas id="cv-${widget.id}"></canvas></div>`;
-
-        const labels = (topServices || []).map(s => s.serviceName);
-        const values = (topServices || []).map(s => s.count);
-        const c = chartColors();
-
-        const chart = new Chart(document.getElementById(`cv-${widget.id}`), {
-            type: 'bar',
-            data: {
-                labels,
-                datasets: [{
-                    label: 'Log count', data: values,
-                    backgroundColor: 'rgba(88,166,255,0.65)', borderColor: '#58a6ff', borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true, maintainAspectRatio: false,
-                scales: {
-                    x: { ticks: { color: c.tick }, grid: { color: c.grid } },
-                    y: { beginAtZero: true, ticks: { precision: 0, color: c.tick }, grid: { color: c.grid } }
-                },
-                plugins: { legend: { display: false } }
-            }
-        });
-        chartInstances.set(widget.id, chart);
-    }
-
-    async function renderRecentTable(el, widget) {
-        el.innerHTML = `
-            <h6 class="mb-3 text-muted"><i class="bi bi-table me-1"></i>${widget.title}</h6>
-            <div class="text-center text-muted py-3"><div class="spinner-border spinner-border-sm"></div></div>`;
-
-        const data = await fetch('/api/logs?size=10').then(r => r.json()).catch(() => ({ content: [] }));
-        const logs  = data.content ?? [];
-
-        const BADGE = { DEBUG: 'badge-DEBUG', INFO: 'badge-INFO', WARN: 'badge-WARN', ERROR: 'badge-ERROR' };
-        const rows  = logs.length === 0
-            ? '<tr><td colspan="4" class="text-center text-muted py-4"><i class="bi bi-inbox"></i> No logs found</td></tr>'
-            : logs.map(log => `
-                <tr>
-                    <td class="small font-monospace text-nowrap">${log.formattedTimestamp ?? ''}</td>
-                    <td><span class="badge ${BADGE[log.level] ?? 'badge-DEBUG'}">${log.level ?? ''}</span></td>
-                    <td class="small">${log.serviceName ?? ''}</td>
-                    <td class="small msg-cell" title="${escHtml(log.message ?? '')}">${escHtml(log.message ?? '')}</td>
-                </tr>`).join('');
-
-        el.innerHTML = `
-            <h6 class="mb-2 text-muted"><i class="bi bi-table me-1"></i>${widget.title}</h6>
-            <div class="table-responsive">
-                <table class="table table-sm mb-0">
-                    <thead><tr>
-                        <th>Timestamp</th><th>Level</th><th>Service</th><th>Message</th>
-                    </tr></thead>
-                    <tbody>${rows}</tbody>
-                </table>
-            </div>`;
-    }
-
-    function escHtml(str) {
-        return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-    }
-
-    // ── Add / Remove widget ──────────────────────────────────────────
-
-    async function addWidget(type) {
-        const res = await fetch('/api/widgets', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ type }),
-        });
-        if (!res.ok) { console.error('Failed to add widget'); return; }
-
-        const widget  = await res.json();
-        const metrics = await fetch('/api/metrics/summary').then(r => r.json()).catch(() => ({}));
-
-        const grid  = document.getElementById('widget-grid');
-        const empty = document.getElementById('widget-empty');
-        empty.style.display = 'none';
-
-        const col = buildWidgetShell(widget);
-        grid.appendChild(col);
-        renderWidgetContent(widget, metrics);
-
-        bootstrap.Modal.getInstance(document.getElementById('addWidgetModal'))?.hide();
-    }
-
-    async function removeWidget(id) {
-        await fetch(`/api/widgets/${id}`, { method: 'DELETE' });
-
-        document.querySelector(`[data-widget-id="${id}"]`)?.remove();
-        chartInstances.get(id)?.destroy();
-        chartInstances.delete(id);
-
-        const grid = document.getElementById('widget-grid');
-        if (grid.children.length === 0) {
-            document.getElementById('widget-empty').style.display = 'block';
+        // Schedule next batch: 1.5 – 3.5 s (random for natural feel)
+        if (streamActive) {
+            streamTimer = setTimeout(generateCycle, 1500 + Math.random() * 2000);
         }
-    }
+    };
 
-    // ── Demo generator ───────────────────────────────────────────────
-    function generateDemoLogs() {
-        fetch('/api/demo/generate?count=50', { method: 'POST' })
-            .then(r => r.json())
-            .then(data => { console.log(data.message); setTimeout(() => location.reload(), 1200); })
-            .catch(err => console.error('Demo generation failed', err));
+    generateCycle();
+
+    // Charts refresh every 8 s while streaming (more responsive)
+    streamChartInt = setInterval(() => {
+        if (!metricsCache) return;
+        widgetRegistry.forEach((w, id) => {
+            if (CHART_TYPES.has(w.type)) { updateChartInPlace(w, metricsCache); markUpdated(id); }
+        });
+    }, 8000);
+}
+
+function stopStream() {
+    streamActive = false;
+    clearTimeout(streamTimer);
+    clearInterval(streamChartInt);
+    streamTimer = streamChartInt = null;
+    updateStreamUI();
+}
+
+function updateStreamUI() {
+    const btn = document.getElementById('streamBtn');
+    const ind = document.getElementById('streamIndicator');
+    if (streamActive) {
+        btn.className = 'btn btn-sm btn-danger';
+        btn.innerHTML = '<i class="bi bi-stop-fill me-1"></i>Stop Stream';
+        ind.classList.remove('d-none');
+    } else {
+        btn.className = 'btn btn-sm btn-outline-success';
+        btn.innerHTML = '<i class="bi bi-broadcast me-1"></i>Start Stream';
+        ind.classList.add('d-none');
     }
+}
+
+// ════════════════════════════════════════════════════════════════════
+// Add / Remove widget
+// ════════════════════════════════════════════════════════════════════
+async function addWidget(type) {
+    const res = await fetch('/api/widgets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type }),
+    });
+    if (!res.ok) { console.error('Failed to add widget'); return; }
+
+    const widget = await res.json();
+    const m = metricsCache ?? await fetch('/api/metrics/summary').then(r => r.json()).catch(() => ({}));
+    metricsCache = m;
+
+    widgetRegistry.set(widget.id, widget);
+    document.getElementById('widget-empty').style.display = 'none';
+
+    const col = buildWidgetShell(widget);
+    document.getElementById('widget-grid').appendChild(col);
+    renderWidgetContent(widget, m);
+    initSortable();   // re-init so new item is draggable
+
+    bootstrap.Modal.getInstance(document.getElementById('addWidgetModal'))?.hide();
+}
+
+async function removeWidget(id) {
+    await fetch(`/api/widgets/${id}`, { method:'DELETE' });
+    document.querySelector(`[data-widget-id="${id}"]`)?.remove();
+    chartInstances.get(id)?.destroy();
+    chartInstances.delete(id);
+    widgetRegistry.delete(id);
+    if (!document.getElementById('widget-grid').children.length) {
+        document.getElementById('widget-empty').style.display = 'block';
+    }
+}
+
+// ════════════════════════════════════════════════════════════════════
+// One-shot demo
+// ════════════════════════════════════════════════════════════════════
+function generateDemoOnce() {
+    fetch('/api/demo/generate?count=50', { method:'POST' })
+        .then(r => r.json())
+        .then(d => { console.log(d.message); setTimeout(() => location.reload(), 1200); })
+        .catch(console.error);
+}
 </script>
 </body>
 </html>
