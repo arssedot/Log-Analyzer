@@ -98,6 +98,9 @@ public class WidgetService {
             case "CHART_LEVEL_BAR"  -> "Level Distribution";
             case "TABLE_RECENT"     -> "Recent Logs";
             case "TABLE_ERRORS"     -> "Recent Errors";
+            case "GAUGE_CPU"        -> "CPU Load";
+            case "GAUGE_RAM"        -> "Memory";
+            case "GAUGE_DISK"       -> "Disk Usage";
             default                 -> type;
         };
     }
@@ -111,6 +114,7 @@ public class WidgetService {
                  "TABLE_ERRORS"                              -> "LARGE";
             case "CHART_LEVEL", "CHART_SERVICES",
                  "CHART_LEVEL_BAR"                           -> "MEDIUM";
+            case "GAUGE_CPU", "GAUGE_RAM", "GAUGE_DISK"      -> "MEDIUM";
             default                                          -> "MEDIUM";
         };
     }

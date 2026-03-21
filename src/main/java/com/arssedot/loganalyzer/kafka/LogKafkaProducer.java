@@ -12,10 +12,6 @@ import java.util.List;
 import java.util.Random;
 import java.util.UUID;
 
-/**
- * Sends log messages to Kafka. Also exposes a demo generator
- * for populating sample data via the /api/demo/generate endpoint.
- */
 @Component
 @RequiredArgsConstructor
 @Slf4j

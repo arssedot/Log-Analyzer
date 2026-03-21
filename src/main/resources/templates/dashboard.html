@@ -132,6 +132,23 @@
 
         /* ── Clear Logs modal ────────────────────────────────────────── */
         .scope-selected { border-color: var(--accent) !important; background: var(--bg-raised); }
+
+        /* ── User avatar (navbar + settings) ─────────────────────────── */
+        .user-avatar { width:32px; height:32px; border-radius:50%; background:var(--accent); color:#fff; display:flex; align-items:center; justify-content:center; font-size:.75rem; font-weight:700; overflow:hidden; flex-shrink:0; cursor:pointer; border:2px solid transparent; transition:border-color .2s; }
+        .user-avatar:hover { border-color:var(--accent); }
+        .user-avatar img { width:100%; height:100%; object-fit:cover; }
+        .settings-avatar { width:88px; height:88px; border-radius:50%; background:var(--accent); color:#fff; display:flex; align-items:center; justify-content:center; font-size:2rem; font-weight:700; overflow:hidden; cursor:pointer; border:3px solid var(--border); transition:border-color .2s; margin:auto; }
+        .settings-avatar:hover { border-color:var(--accent); }
+        .settings-avatar img { width:100%; height:100%; object-fit:cover; }
+
+        /* ── Gauge widget ─────────────────────────────────────────────── */
+        .gauge-wrap { position:relative; height:178px; }
+        .gauge-overlay { position:absolute; bottom:12%; left:50%; transform:translateX(-50%); text-align:center; pointer-events:none; white-space:nowrap; }
+
+        /* ── Settings modal ───────────────────────────────────────────── */
+        .modal-footer { border-top: 1px solid var(--border); }
+        .settings-section-label { font-size:.7rem; text-transform:uppercase; letter-spacing:.6px; font-weight:600; color:var(--text-muted); margin-bottom:10px; }
+        .lang-btn-active { background:var(--accent) !important; border-color:var(--accent) !important; color:#fff !important; }
     </style>
 </head>
 <body>
@@ -169,16 +186,20 @@
         </label>
 
         <button class="btn btn-sm btn-outline-secondary" onclick="generateDemoOnce()" style="font-size:.8rem;">
-            <i class="bi bi-lightning-charge me-1"></i>Demo Logs
+            <i class="bi bi-lightning-charge me-1"></i><span data-i18n="nav.demoLogs">Demo Logs</span>
+        </button>
+
+        <button class="btn btn-sm btn-outline-secondary" onclick="openSettings()" title="Settings" style="font-size:.82rem;">
+            <i class="bi bi-gear me-1"></i><span data-i18n="nav.settings">Settings</span>
         </button>
 
         <div class="d-flex align-items-center gap-2">
-            <i class="bi bi-person-circle text-muted"></i>
-            <span class="text-muted small" sec:authentication="name">user</span>
+            <div id="navAvatar" class="user-avatar" onclick="openSettings()" title="Settings"></div>
+            <span class="text-muted small" id="navUserName" sec:authentication="name">user</span>
             <form th:action="@{/logout}" method="post" class="mb-0">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                 <button type="submit" class="btn btn-sm btn-outline-danger" style="font-size:.75rem;padding:2px 8px;">
-                    <i class="bi bi-box-arrow-right me-1"></i>Sign out
+                    <i class="bi bi-box-arrow-right me-1"></i><span data-i18n="nav.signOut">Sign out</span>
                 </button>
             </form>
         </div>
@@ -349,6 +370,64 @@
     </div>
 </div>
 
+<!-- ── Settings Modal ────────────────────────────────────────────────── -->
+<div class="modal fade" id="settingsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-gear me-2"></i><span data-i18n="settings.title">Settings</span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body pb-2">
+
+                <!-- Avatar -->
+                <div class="text-center mb-3">
+                    <div id="settingsAvatar" class="settings-avatar mb-2" onclick="triggerAvatarUpload()"></div>
+                    <div style="cursor:pointer;" onclick="triggerAvatarUpload()" class="text-muted small">
+                        <i class="bi bi-camera me-1"></i><span data-i18n="settings.changeAvatar">Change avatar</span>
+                    </div>
+                    <input type="file" id="avatarInput" accept="image/jpeg,image/png,image/gif,image/webp"
+                           style="display:none;" onchange="uploadAvatar(this)"/>
+                </div>
+
+                <hr style="border-color:var(--border);"/>
+
+                <!-- Profile -->
+                <div class="mb-3">
+                    <div class="settings-section-label" data-i18n="settings.profile">Profile</div>
+                    <label class="form-label text-muted small mb-1" data-i18n="settings.displayName">Display Name</label>
+                    <input type="text" id="settingsName" class="form-control form-control-sm" maxlength="100"
+                           placeholder="Your name" data-i18n-placeholder="settings.namePlaceholder"/>
+                </div>
+
+                <!-- Language -->
+                <div>
+                    <div class="settings-section-label" data-i18n="settings.preferences">Preferences</div>
+                    <div class="d-flex align-items-center justify-content-between">
+                        <label class="text-muted small" data-i18n="settings.language">Language</label>
+                        <div class="btn-group btn-group-sm" role="group">
+                            <button type="button" id="langBtnEn"
+                                    class="btn btn-outline-secondary" onclick="selectLang('en')">
+                                🇬🇧 English
+                            </button>
+                            <button type="button" id="langBtnRu"
+                                    class="btn btn-outline-secondary" onclick="selectLang('ru')">
+                                🇷🇺 Русский
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal" data-i18n="settings.cancel">Cancel</button>
+                <button type="button" class="btn btn-primary btn-sm" onclick="saveSettings()">
+                    <i class="bi bi-check2 me-1"></i><span data-i18n="settings.save">Save</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- ── Add Widget Modal ──────────────────────────────────────────────── -->
 <div class="modal fade" id="addWidgetModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
@@ -395,6 +474,75 @@ let   metricsCache    = null;
 let logFilter = { level:'', service:'', from:'', to:'', q:'', page:0, size:20 };
 let logTotalPages = 0;
 
+// System metrics
+let systemMetrics = null;
+
+// Profile
+let userProfile   = null;
+let _pendingLang  = null;
+
+// i18n — current language (from profile or localStorage)
+let currentLang = localStorage.getItem('la-lang') || 'en';
+const I18N = {
+    en: {
+        'nav.addWidget':'Add Widget', 'nav.startStream':'Start Stream', 'nav.stopStream':'Stop Stream',
+        'nav.demoLogs':'Demo Logs', 'nav.settings':'Settings', 'nav.signOut':'Sign out',
+        'log.title':'Log Explorer', 'log.clearLogs':'Clear Logs', 'log.level':'Level',
+        'log.allLevels':'All Levels', 'log.service':'Service', 'log.from':'From', 'log.to':'To',
+        'log.search':'Search message', 'log.clear':'Clear', 'log.jumpTo':'Jump to page:',
+        'log.go':'Go', 'log.perPage':'Per page:', 'log.colTimestamp':'Timestamp (UTC)',
+        'log.colLevel':'Level', 'log.colService':'Service', 'log.colMessage':'Message',
+        'log.colTrace':'Trace ID', 'log.colHost':'Host',
+        'log.empty':'No logs match the current filters', 'log.loading':'Loading…',
+        'clear.title':'Clear Logs', 'clear.warning':'This action is permanent and cannot be undone.',
+        'clear.filtered':'Matching current filter', 'clear.allLogs':'All logs',
+        'clear.allLogs.desc':'Remove every log entry in the database',
+        'clear.entries':'entries will be deleted', 'clear.cancel':'Cancel', 'clear.delete':'Delete',
+        'widget.add':'Add Widget', 'widget.noWidgets':'No widgets yet.',
+        'widget.addFirst':'Add your first widget',
+        'settings.title':'Settings', 'settings.profile':'Profile',
+        'settings.displayName':'Display Name', 'settings.namePlaceholder':'Your name',
+        'settings.changeAvatar':'Change avatar', 'settings.preferences':'Preferences',
+        'settings.language':'Language', 'settings.save':'Save', 'settings.saved':'Saved!',
+        'settings.cancel':'Cancel',
+        'stream.logs':' logs',
+    },
+    ru: {
+        'nav.addWidget':'Добавить виджет', 'nav.startStream':'Начать поток', 'nav.stopStream':'Остановить поток',
+        'nav.demoLogs':'Демо логи', 'nav.settings':'Настройки', 'nav.signOut':'Выйти',
+        'log.title':'Просмотр логов', 'log.clearLogs':'Очистить логи', 'log.level':'Уровень',
+        'log.allLevels':'Все уровни', 'log.service':'Сервис', 'log.from':'С', 'log.to':'По',
+        'log.search':'Поиск по сообщению', 'log.clear':'Сбросить', 'log.jumpTo':'Перейти на стр.:',
+        'log.go':'Перейти', 'log.perPage':'На странице:', 'log.colTimestamp':'Время (UTC)',
+        'log.colLevel':'Уровень', 'log.colService':'Сервис', 'log.colMessage':'Сообщение',
+        'log.colTrace':'Trace ID', 'log.colHost':'Хост',
+        'log.empty':'Логи не найдены', 'log.loading':'Загрузка…',
+        'clear.title':'Очистить логи', 'clear.warning':'Это действие необратимо.',
+        'clear.filtered':'По текущему фильтру', 'clear.allLogs':'Все логи',
+        'clear.allLogs.desc':'Удалить все записи из базы данных',
+        'clear.entries':'записей будет удалено', 'clear.cancel':'Отмена', 'clear.delete':'Удалить',
+        'widget.add':'Добавить виджет', 'widget.noWidgets':'Виджетов нет.',
+        'widget.addFirst':'Добавить первый виджет',
+        'settings.title':'Настройки', 'settings.profile':'Профиль',
+        'settings.displayName':'Имя пользователя', 'settings.namePlaceholder':'Ваше имя',
+        'settings.changeAvatar':'Изменить аватар', 'settings.preferences':'Настройки',
+        'settings.language':'Язык', 'settings.save':'Сохранить', 'settings.saved':'Сохранено!',
+        'settings.cancel':'Отмена',
+        'stream.logs':' логов',
+    }
+};
+function t(key) { return I18N[currentLang]?.[key] ?? I18N.en[key] ?? key; }
+function applyI18n() {
+    document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.getAttribute('data-i18n')); });
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => { el.placeholder = t(el.getAttribute('data-i18n-placeholder')); });
+    // Stream button text is managed by updateStreamUI()
+    updateStreamUI();
+    // Language buttons highlight
+    const enBtn = document.getElementById('langBtnEn'), ruBtn = document.getElementById('langBtnRu');
+    if (enBtn) { enBtn.className = 'btn btn-outline-secondary btn-sm' + (currentLang==='en' ? ' lang-btn-active' : ''); }
+    if (ruBtn) { ruBtn.className = 'btn btn-outline-secondary btn-sm' + (currentLang==='ru' ? ' lang-btn-active' : ''); }
+}
+
 // ════════════════════════════════════════════════════════════════════
 // Widget catalogue
 // ════════════════════════════════════════════════════════════════════
@@ -412,11 +560,15 @@ const WIDGET_DEFS = {
     CHART_LEVEL_BAR:{ label:'Level Bar Chart', icon:'bi-bar-chart-steps',      desc:'Level counts as bar chart',  col:'col-md-6' },
     TABLE_RECENT:   { label:'Recent Logs',     icon:'bi-table',                desc:'Last 10 log entries',        col:'col-md-12' },
     TABLE_ERRORS:   { label:'Recent Errors',   icon:'bi-bug',                  desc:'Last 10 ERROR log entries',  col:'col-md-12' },
+    GAUGE_CPU:      { label:'CPU Load',        icon:'bi-cpu',                  desc:'Live processor utilization', col:'col-md-4'  },
+    GAUGE_RAM:      { label:'Memory',          icon:'bi-memory',               desc:'Live RAM utilization',       col:'col-md-4'  },
+    GAUGE_DISK:     { label:'Disk Usage',      icon:'bi-hdd',                  desc:'Storage space utilization',  col:'col-md-4'  },
 };
-const SIZE_CLASS = { SMALL:'col-6 col-md-3', MEDIUM:'col-md-4', LARGE:'col-md-8', FULL:'col-md-12' };
+const SIZE_CLASS  = { SMALL:'col-6 col-md-3', MEDIUM:'col-md-4', LARGE:'col-md-8', FULL:'col-md-12' };
 const STAT_TYPES  = new Set(['STAT_TOTAL','STAT_ERRORS','STAT_WARNS','STAT_ERROR_RATE','STAT_INFOS','STAT_LAST_HOUR','STAT_SERVICES']);
 const CHART_TYPES = new Set(['CHART_LEVEL','CHART_TIMELINE','CHART_SERVICES','CHART_LEVEL_BAR']);
 const TABLE_TYPES = new Set(['TABLE_RECENT','TABLE_ERRORS']);
+const GAUGE_TYPES = new Set(['GAUGE_CPU','GAUGE_RAM','GAUGE_DISK']);
 const TABLE_URL   = { TABLE_RECENT:'/api/logs?size=10', TABLE_ERRORS:'/api/logs?size=10&level=ERROR' };
 const LEVEL_COLORS = { DEBUG:'#6c757d', INFO:'#1f6feb', WARN:'#d29922', ERROR:'#da3633' };
 const BADGE_CLASS  = { DEBUG:'badge-DEBUG', INFO:'badge-INFO', WARN:'badge-WARN', ERROR:'badge-ERROR' };
@@ -428,10 +580,13 @@ function colClass(w) { return SIZE_CLASS[w.size] || WIDGET_DEFS[w.type]?.col || 
 // ════════════════════════════════════════════════════════════════════
 window.addEventListener('DOMContentLoaded', () => {
     document.getElementById('themeToggle').checked = !isDark();
+    applyI18n();          // apply saved language immediately
     buildAddWidgetModal();
     readFilterFromUrl();
     prefillFilterForm();
+    loadProfile();        // loads name, avatar, language from server
     loadDashboard();
+    fetchSystemMetrics();
     fetchAndRenderLog();
     startPeriodicRefresh();
 });
@@ -677,6 +832,9 @@ function renderWidgetContent(widget, metrics) {
         case 'CHART_TIMELINE':  chartTimeline(el,widget,metrics.timeSeriesData??[]); break;
         case 'CHART_SERVICES':  chartServices(el,widget,metrics.topServices??[]); break;
         case 'TABLE_RECENT': case 'TABLE_ERRORS': tableLog(el,widget,TABLE_URL[widget.type]); break;
+        case 'GAUGE_CPU':  renderGaugeWidget(el,widget,systemMetrics?.cpuUsagePercent??0, `${systemMetrics?.cpuCores??0} cores`,'CPU'); break;
+        case 'GAUGE_RAM':  renderGaugeWidget(el,widget,systemMetrics?.ramUsagePercent??0, `${systemMetrics?.ramUsed??''}  / ${systemMetrics?.ramTotal??''}`,'RAM'); break;
+        case 'GAUGE_DISK': renderGaugeWidget(el,widget,systemMetrics?.diskUsagePercent??0,`${systemMetrics?.diskUsed??''} / ${systemMetrics?.diskTotal??''}`,'Disk'); break;
         default: el.innerHTML = `<span class="text-muted small">Unknown: ${widget.type}</span>`;
     }
     markUpdated(widget.id);
@@ -744,6 +902,70 @@ function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').re
 function fmt(n) { return Number(n).toLocaleString(); }
 
 // ════════════════════════════════════════════════════════════════════
+// System Metrics (CPU / RAM / Disk gauges)
+// ════════════════════════════════════════════════════════════════════
+async function fetchSystemMetrics() {
+    systemMetrics = await fetch('/api/system/metrics').then(r=>r.json()).catch(()=>null);
+}
+
+function gaugeColor(pct) {
+    if (pct < 50) return '#3fb950';
+    if (pct < 80) return '#d29922';
+    return '#f85149';
+}
+
+function renderGaugeWidget(el, widget, pct, detail) {
+    const p = Math.min(100, Math.max(0, pct));
+    const color = gaugeColor(p);
+    const bg = isDark() ? '#21262d' : '#e8ecef';
+    el.innerHTML = `
+        <div class="widget-title">${widget.title}</div>
+        <div class="gauge-wrap">
+            <canvas id="cv-${widget.id}"></canvas>
+            <div class="gauge-overlay">
+                <div id="gval-${widget.id}" style="font-size:1.75rem;font-weight:700;color:${color};line-height:1;">${p.toFixed(1)}%</div>
+                <div id="gdet-${widget.id}" style="font-size:.67rem;color:var(--text-muted);margin-top:3px;">${detail}</div>
+            </div>
+        </div>`;
+    const chart = new Chart(document.getElementById(`cv-${widget.id}`), {
+        type: 'doughnut',
+        data: { datasets: [{ data:[p, 100-p], backgroundColor:[color, bg], borderWidth:0 }] },
+        options: {
+            circumference: 210, rotation: -105,
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend:{display:false}, tooltip:{enabled:false} },
+            cutout: '78%', animation: { animateRotate:true, duration:900 }
+        }
+    });
+    chartInstances.set(widget.id, chart);
+}
+
+function updateGaugeInPlace(widget, sysM) {
+    if (!sysM) return;
+    let pct, detail;
+    switch(widget.type) {
+        case 'GAUGE_CPU':  pct=sysM.cpuUsagePercent; detail=`${sysM.cpuCores} cores`; break;
+        case 'GAUGE_RAM':  pct=sysM.ramUsagePercent; detail=`${sysM.ramUsed} / ${sysM.ramTotal}`; break;
+        case 'GAUGE_DISK': pct=sysM.diskUsagePercent; detail=`${sysM.diskUsed} / ${sysM.diskTotal}`; break;
+        default: return;
+    }
+    pct = Math.min(100, Math.max(0, pct));
+    const color = gaugeColor(pct);
+    const bg    = isDark() ? '#21262d' : '#e8ecef';
+    const chart = chartInstances.get(widget.id);
+    if (chart) {
+        chart.data.datasets[0].data = [pct, 100 - pct];
+        chart.data.datasets[0].backgroundColor = [color, bg];
+        chart.update('active');
+    }
+    const valEl = document.getElementById(`gval-${widget.id}`);
+    if (valEl) { valEl.textContent = pct.toFixed(1) + '%'; valEl.style.color = color; }
+    const detEl = document.getElementById(`gdet-${widget.id}`);
+    if (detEl) detEl.textContent = detail;
+    markUpdated(widget.id);
+}
+
+// ════════════════════════════════════════════════════════════════════
 // Drag & Drop
 // ════════════════════════════════════════════════════════════════════
 let sortable = null;
@@ -771,9 +993,16 @@ function startPeriodicRefresh() {
 async function periodicStatRefresh() {
     if (streamActive) return; // stream handles its own refresh
     try {
-        const m = await fetch('/api/metrics/summary').then(r=>r.json());
-        metricsCache = m;
-        widgetRegistry.forEach((w,id) => { if (STAT_TYPES.has(w.type)) updateStatInPlace(w,m); });
+        const [m, sysM] = await Promise.all([
+            fetch('/api/metrics/summary').then(r=>r.json()),
+            fetch('/api/system/metrics').then(r=>r.json()),
+        ]);
+        metricsCache   = m;
+        systemMetrics  = sysM;
+        widgetRegistry.forEach((w) => {
+            if (STAT_TYPES.has(w.type))  updateStatInPlace(w, m);
+            if (GAUGE_TYPES.has(w.type)) updateGaugeInPlace(w, sysM);
+        });
         document.getElementById('globalRefreshTs').textContent = 'Updated ' + timeStr();
     } catch(e) {}
 }
@@ -868,14 +1097,21 @@ function startStream() {
         try {
             await fetch(`/api/demo/generate?count=${count}`, { method:'POST' });
             streamLogCount += count;
-            document.getElementById('streamCount').textContent = streamLogCount + ' logs';
+            document.getElementById('streamCount').textContent = streamLogCount + t('stream.logs');
         } catch(e) {}
 
-        // Refresh metrics + stats
-        const m = await fetch('/api/metrics/summary').then(r=>r.json()).catch(()=>metricsCache);
+        // Refresh metrics + stats + gauges
+        const [m, sysM] = await Promise.all([
+            fetch('/api/metrics/summary').then(r=>r.json()).catch(()=>metricsCache),
+            fetch('/api/system/metrics').then(r=>r.json()).catch(()=>systemMetrics),
+        ]);
         if (m) {
-            metricsCache = m;
-            widgetRegistry.forEach((w,id) => { if(STAT_TYPES.has(w.type)) updateStatInPlace(w,m); });
+            metricsCache  = m;
+            systemMetrics = sysM;
+            widgetRegistry.forEach((w) => {
+                if (STAT_TYPES.has(w.type))  updateStatInPlace(w, m);
+                if (GAUGE_TYPES.has(w.type)) updateGaugeInPlace(w, sysM);
+            });
             document.getElementById('globalRefreshTs').textContent = 'Updated ' + timeStr();
         }
 
@@ -908,17 +1144,17 @@ function stopStream() {
 }
 
 function updateStreamUI() {
-    const btn = document.getElementById('streamBtn');
-    const ind = document.getElementById('streamIndicator');
+    const btn   = document.getElementById('streamBtn');
+    const ind   = document.getElementById('streamIndicator');
     const badge = document.getElementById('logLiveBadge');
     if (streamActive) {
         btn.className = 'btn btn-sm btn-danger';
-        btn.innerHTML = '<i class="bi bi-stop-fill me-1"></i>Stop Stream';
+        btn.innerHTML = `<i class="bi bi-stop-fill me-1"></i>${t('nav.stopStream')}`;
         ind.classList.remove('d-none');
         if(badge) badge.style.display = '';
     } else {
         btn.className = 'btn btn-sm btn-outline-success';
-        btn.innerHTML = '<i class="bi bi-broadcast me-1"></i>Start Stream';
+        btn.innerHTML = `<i class="bi bi-broadcast me-1"></i>${t('nav.startStream')}`;
         ind.classList.add('d-none');
         if(badge) badge.style.display = 'none';
     }
@@ -998,6 +1234,100 @@ function selectClearScope(scope) {
 
     const count = scope === 'all' ? (metricsCache?.totalLogs ?? 0) : logTotalElements;
     document.getElementById('confirmDeleteLabel').textContent = `Delete ${fmt(count)} entr${count === 1 ? 'y' : 'ies'}`;
+}
+
+// ════════════════════════════════════════════════════════════════════
+// Profile & Settings
+// ════════════════════════════════════════════════════════════════════
+async function loadProfile() {
+    userProfile = await fetch('/api/profile').then(r=>r.json()).catch(()=>null);
+    if (!userProfile) return;
+    // Language: profile takes precedence over localStorage
+    const lang = userProfile.language || localStorage.getItem('la-lang') || 'en';
+    if (lang !== currentLang) { currentLang = lang; localStorage.setItem('la-lang', lang); applyI18n(); }
+    // Navbar name
+    const nameEl = document.getElementById('navUserName');
+    if (nameEl) nameEl.textContent = userProfile.displayName || userProfile.email || '';
+    renderAvatarEl(document.getElementById('navAvatar'), userProfile);
+}
+
+function renderAvatarEl(el, profile) {
+    if (!el || !profile) return;
+    if (profile.avatarData) {
+        el.innerHTML = `<img src="${profile.avatarData}" alt="avatar"/>`;
+    } else {
+        const name = profile.displayName || profile.email || '?';
+        el.textContent = name.charAt(0).toUpperCase();
+        el.innerHTML === '' && (el.textContent = '?');
+    }
+}
+
+function openSettings() {
+    if (userProfile) {
+        document.getElementById('settingsName').value = userProfile.displayName || '';
+        renderAvatarEl(document.getElementById('settingsAvatar'), userProfile);
+    }
+    _pendingLang = null;
+    updateLangButtons();
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('settingsModal')).show();
+}
+
+function selectLang(lang) {
+    _pendingLang = lang;
+    // Preview i18n immediately
+    currentLang = lang;
+    applyI18n();
+}
+
+function updateLangButtons() {
+    const lang = _pendingLang || currentLang;
+    const enBtn = document.getElementById('langBtnEn'), ruBtn = document.getElementById('langBtnRu');
+    if (enBtn) enBtn.className = 'btn btn-outline-secondary btn-sm' + (lang==='en' ? ' lang-btn-active' : '');
+    if (ruBtn) ruBtn.className = 'btn btn-outline-secondary btn-sm' + (lang==='ru' ? ' lang-btn-active' : '');
+}
+
+async function saveSettings() {
+    const name = document.getElementById('settingsName').value.trim();
+    const lang = _pendingLang || currentLang;
+    const res  = await fetch('/api/profile', {
+        method:'PUT', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ displayName: name || null, language: lang })
+    });
+    if (!res.ok) return;
+    userProfile = await res.json();
+    localStorage.setItem('la-lang', lang);
+    currentLang = lang;
+    _pendingLang = null;
+    applyI18n();
+    const nameEl = document.getElementById('navUserName');
+    if (nameEl) nameEl.textContent = userProfile.displayName || userProfile.email || '';
+    renderAvatarEl(document.getElementById('navAvatar'), userProfile);
+    renderAvatarEl(document.getElementById('settingsAvatar'), userProfile);
+    // Brief "Saved!" feedback on button
+    const saveSpan = document.querySelector('#settingsModal .btn-primary span[data-i18n]');
+    if (saveSpan) {
+        saveSpan.textContent = t('settings.saved');
+        setTimeout(() => { saveSpan.textContent = t('settings.save'); }, 1400);
+    }
+    setTimeout(() => bootstrap.Modal.getInstance(document.getElementById('settingsModal'))?.hide(), 400);
+}
+
+function triggerAvatarUpload() {
+    document.getElementById('avatarInput').click();
+}
+
+async function uploadAvatar(input) {
+    if (!input.files?.[0]) return;
+    const file = input.files[0];
+    if (file.size > 2 * 1024 * 1024) { alert('Max avatar size: 2 MB'); input.value=''; return; }
+    const fd = new FormData(); fd.append('file', file);
+    const res = await fetch('/api/profile/avatar', { method:'POST', body:fd });
+    if (res.ok) {
+        userProfile = await res.json();
+        renderAvatarEl(document.getElementById('navAvatar'), userProfile);
+        renderAvatarEl(document.getElementById('settingsAvatar'), userProfile);
+    }
+    input.value = '';
 }
 
 async function executeClearLogs() {

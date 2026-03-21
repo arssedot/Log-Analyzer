@@ -44,11 +44,8 @@ public class SecurityConfig {
         http
             .authenticationProvider(authenticationProvider())
             .authorizeHttpRequests(auth -> auth
-                // Public pages
                 .requestMatchers("/login", "/register").permitAll()
-                // REST API — disable CSRF and allow with auth
                 .requestMatchers("/api/**").authenticated()
-                // Everything else requires login
                 .anyRequest().authenticated()
             )
             .formLogin(form -> form
@@ -64,7 +61,6 @@ public class SecurityConfig {
                 .deleteCookies("JSESSIONID")
                 .permitAll()
             )
-            // Disable CSRF only for REST API endpoints (called by external services)
             .csrf(csrf -> csrf
                 .ignoringRequestMatchers("/api/**")
             );

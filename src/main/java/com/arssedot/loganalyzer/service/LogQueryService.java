@@ -42,11 +42,6 @@ public class LogQueryService {
         return repository.findDistinctServiceNames();
     }
 
-    /**
-     * Deletes log entries that match the given filter.
-     * If no filter criteria are set, deletes all entries.
-     * @return number of deleted entries
-     */
     @Transactional
     public long delete(LogFilterDto filter) {
         boolean hasFilter = hasText(filter.getLevel())

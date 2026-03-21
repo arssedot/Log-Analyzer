@@ -36,6 +36,16 @@ public class User implements UserDetails {
     @Builder.Default
     private boolean enabled = true;
 
+    @Column(name = "display_name", length = 100)
+    private String displayName;
+
+    @Column(nullable = false, length = 10)
+    @Builder.Default
+    private String language = "en";
+
+    @Column(name = "avatar_data", columnDefinition = "TEXT")
+    private String avatarData;
+
     @Column(name = "created_at", updatable = false)
     private Instant createdAt;
 
@@ -49,7 +59,6 @@ public class User implements UserDetails {
         return List.of(new SimpleGrantedAuthority("ROLE_" + role));
     }
 
-    /** Spring Security uses this as the username identifier. */
     @Override
     public String getUsername() {
         return email;
