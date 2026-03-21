@@ -129,6 +129,9 @@
         /* ── Log table header ────────────────────────────────────────── */
         .log-section-title { font-size: .68rem; text-transform: uppercase; letter-spacing: .7px; font-weight: 600; color: var(--text-muted); margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
         .log-live-badge { background: rgba(63,185,80,.15); color: #3fb950; border: 1px solid rgba(63,185,80,.3); border-radius: 10px; padding: 1px 8px; font-size: .65rem; font-weight: 700; }
+
+        /* ── Clear Logs modal ────────────────────────────────────────── */
+        .scope-selected { border-color: var(--accent) !important; background: var(--bg-raised); }
     </style>
 </head>
 <body>
@@ -202,6 +205,10 @@
             <i class="bi bi-list-ul"></i>
             Log Explorer
             <span class="log-live-badge" id="logLiveBadge" style="display:none;">● LIVE</span>
+            <button class="btn btn-sm btn-outline-danger ms-auto"
+                    onclick="openClearModal()" style="font-size:.75rem; font-weight:500; text-transform:none; letter-spacing:0;">
+                <i class="bi bi-trash3 me-1"></i>Clear Logs
+            </button>
         </div>
 
         <!-- Filter form (no page reload — handled by JS) -->
@@ -280,6 +287,63 @@
                 <input type="number" id="gotoPage" class="form-control form-control-sm"
                        min="1" placeholder="№" onkeydown="if(event.key==='Enter') jumpToPage()"/>
                 <button class="btn btn-sm btn-outline-secondary" onclick="jumpToPage()">Go</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── Clear Logs Modal ──────────────────────────────────────────────── -->
+<div class="modal fade" id="clearLogsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-danger"><i class="bi bi-trash3 me-2"></i>Clear Logs</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning d-flex align-items-center gap-2 mb-4" style="font-size:.85rem;">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                    This action is <strong>permanent</strong> and cannot be undone.
+                </div>
+
+                <!-- Scope selector -->
+                <div class="mb-3">
+                    <label class="form-label text-muted small text-uppercase fw-semibold" style="letter-spacing:.5px;">What to delete</label>
+
+                    <div class="card p-3 mb-2" id="scopeFilteredCard" onclick="selectClearScope('filtered')" style="cursor:pointer;">
+                        <div class="d-flex align-items-start gap-2">
+                            <input class="form-check-input mt-1 flex-shrink-0" type="radio" name="clearScope" id="scopeFiltered" value="filtered"/>
+                            <div class="flex-grow-1">
+                                <div class="fw-semibold" style="font-size:.88rem;">Matching current filter</div>
+                                <div class="text-muted mt-1" style="font-size:.78rem;" id="clearFilterSummary">—</div>
+                                <div class="mt-1">
+                                    <span class="badge bg-danger" id="clearFilteredCount">0</span>
+                                    <span class="text-muted small ms-1">entries will be deleted</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card p-3" id="scopeAllCard" onclick="selectClearScope('all')" style="cursor:pointer;">
+                        <div class="d-flex align-items-start gap-2">
+                            <input class="form-check-input mt-1 flex-shrink-0" type="radio" name="clearScope" id="scopeAll" value="all"/>
+                            <div class="flex-grow-1">
+                                <div class="fw-semibold" style="font-size:.88rem;">All logs</div>
+                                <div class="text-muted mt-1" style="font-size:.78rem;">Remove every log entry in the database</div>
+                                <div class="mt-1">
+                                    <span class="badge bg-danger" id="clearAllCount">0</span>
+                                    <span class="text-muted small ms-1">entries will be deleted</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger btn-sm" id="confirmDeleteBtn" onclick="executeClearLogs()">
+                    <i class="bi bi-trash3 me-1"></i><span id="confirmDeleteLabel">Delete</span>
+                </button>
             </div>
         </div>
     </div>
@@ -477,11 +541,12 @@ async function fetchAndRenderLog() {
 }
 
 function renderLog(page) {
-    logTotalPages = page.totalPages || 1;
-    const cur     = page.number || 0;
+    logTotalPages    = page.totalPages || 1;
+    logTotalElements = page.totalElements || 0;
+    const cur        = page.number || 0;
 
     // Count line
-    const total = (page.totalElements || 0).toLocaleString();
+    const total = logTotalElements.toLocaleString();
     document.getElementById('logCount').textContent =
         `${total} entr${page.totalElements === 1 ? 'y' : 'ies'} found` +
         (page.totalPages > 1 ? ` — page ${cur + 1} of ${page.totalPages}` : '');
@@ -894,6 +959,80 @@ function generateDemoOnce() {
     fetch('/api/demo/generate?count=50',{method:'POST'})
         .then(r=>r.json()).then(()=>fetchAndRenderLog()).catch(console.error);
 }
+
+// ════════════════════════════════════════════════════════════════════
+// Clear Logs
+// ════════════════════════════════════════════════════════════════════
+let logTotalElements = 0;   // updated each time renderLog() runs
+let _clearScope = 'all';
+
+function openClearModal() {
+    const hasFilter = !!(logFilter.level || logFilter.service || logFilter.from || logFilter.to || logFilter.q);
+
+    // Counts
+    document.getElementById('clearFilteredCount').textContent = logTotalElements.toLocaleString();
+    document.getElementById('clearAllCount').textContent      = fmt(metricsCache?.totalLogs ?? 0);
+
+    // Filter summary text
+    const parts = [];
+    if (logFilter.level)   parts.push('Level: ' + logFilter.level);
+    if (logFilter.service) parts.push('Service: ' + logFilter.service);
+    if (logFilter.from)    parts.push('From: ' + logFilter.from);
+    if (logFilter.to)      parts.push('To: ' + logFilter.to);
+    if (logFilter.q)       parts.push('Search: "' + logFilter.q + '"');
+    document.getElementById('clearFilterSummary').textContent =
+        parts.length ? parts.join(' · ') : 'No active filter — same as deleting all';
+
+    // Auto-select scope
+    selectClearScope(hasFilter ? 'filtered' : 'all');
+
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('clearLogsModal')).show();
+}
+
+function selectClearScope(scope) {
+    _clearScope = scope;
+    document.getElementById('scopeFiltered').checked = scope === 'filtered';
+    document.getElementById('scopeAll').checked      = scope === 'all';
+    document.getElementById('scopeFilteredCard').classList.toggle('scope-selected', scope === 'filtered');
+    document.getElementById('scopeAllCard').classList.toggle('scope-selected', scope === 'all');
+
+    const count = scope === 'all' ? (metricsCache?.totalLogs ?? 0) : logTotalElements;
+    document.getElementById('confirmDeleteLabel').textContent = `Delete ${fmt(count)} entr${count === 1 ? 'y' : 'ies'}`;
+}
+
+async function executeClearLogs() {
+    const btn = document.getElementById('confirmDeleteBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Deleting…';
+
+    const params = new URLSearchParams();
+    if (_clearScope === 'filtered') {
+        if (logFilter.level)   params.set('level',   logFilter.level);
+        if (logFilter.service) params.set('service', logFilter.service);
+        if (logFilter.from)    params.set('from',    logFilter.from);
+        if (logFilter.to)      params.set('to',      logFilter.to);
+        if (logFilter.q)       params.set('q',       logFilter.q);
+    }
+
+    try {
+        const res  = await fetch('/api/logs?' + params, { method: 'DELETE' });
+        const data = await res.json();
+        console.log(data.message);
+    } catch(e) {
+        console.error('Delete failed', e);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-trash3 me-1"></i><span id="confirmDeleteLabel">Delete</span>';
+    }
+
+    bootstrap.Modal.getInstance(document.getElementById('clearLogsModal'))?.hide();
+
+    // Reset to page 0 after deletion and refresh everything
+    logFilter.page = 0;
+    await fetchAndRenderLog();
+    await periodicStatRefresh();   // refresh metrics + widget stats
+}
+
 </script>
 </body>
 </html>

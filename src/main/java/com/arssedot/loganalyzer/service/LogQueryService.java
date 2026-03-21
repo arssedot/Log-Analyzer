@@ -42,6 +42,32 @@ public class LogQueryService {
         return repository.findDistinctServiceNames();
     }
 
+    /**
+     * Deletes log entries that match the given filter.
+     * If no filter criteria are set, deletes all entries.
+     * @return number of deleted entries
+     */
+    @Transactional
+    public long delete(LogFilterDto filter) {
+        boolean hasFilter = hasText(filter.getLevel())
+                || hasText(filter.getService())
+                || hasText(filter.getFrom())
+                || hasText(filter.getTo())
+                || hasText(filter.getQ());
+
+        if (!hasFilter) {
+            long count = repository.count();
+            repository.deleteAllInBatch();
+            return count;
+        }
+
+        List<LogEntry> toDelete = repository.findAll(buildSpec(filter));
+        if (!toDelete.isEmpty()) {
+            repository.deleteAllInBatch(toDelete);
+        }
+        return toDelete.size();
+    }
+
     private Specification<LogEntry> buildSpec(LogFilterDto filter) {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();

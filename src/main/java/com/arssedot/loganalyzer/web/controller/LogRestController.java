@@ -11,6 +11,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/logs")
 @RequiredArgsConstructor
@@ -28,5 +30,12 @@ public class LogRestController {
     @GetMapping
     public Page<LogEntry> search(LogFilterDto filter) {
         return queryService.search(filter);
+    }
+
+    @DeleteMapping
+    public Map<String, Object> delete(LogFilterDto filter) {
+        long deleted = queryService.delete(filter);
+        return Map.of("deleted", deleted,
+                      "message", "Deleted " + deleted + " log " + (deleted == 1 ? "entry" : "entries"));
     }
 }
