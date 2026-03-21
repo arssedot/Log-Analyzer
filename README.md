@@ -50,7 +50,7 @@
 ### 1. Клонировать репозиторий
 
 ```bash
-git clone https://github.com/ВАШ_USERNAME/log-analyzer.git
+git clone https://github.com/username/log-analyzer.git
 cd log-analyzer
 ```
 
