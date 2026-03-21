@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Log Analyzer</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"/>
+    <style>
+        :root {
+            --bg-base:    #0d1117;
+            --bg-surface: #161b22;
+            --bg-raised:  #21262d;
+            --border:     #30363d;
+            --text:       #e6edf3;
+            --text-muted: #8b949e;
+            --accent:     #58a6ff;
+        }
+
+        body { background: var(--bg-base); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; }
+
+        .navbar-brand { font-weight: 700; font-size: 1.2rem; letter-spacing: .5px; }
+        .navbar { background: var(--bg-surface) !important; border-bottom: 1px solid var(--border); }
+
+        .card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+        }
+
+        .stat-icon { font-size: 2rem; }
+        .stat-value { font-size: 2rem; font-weight: 700; line-height: 1; }
+
+        .chart-wrap { position: relative; height: 220px; }
+
+        .table { color: var(--text); --bs-table-bg: transparent; }
+        .table thead th {
+            background: var(--bg-raised);
+            border-color: var(--border);
+            color: var(--text-muted);
+            font-size: .75rem;
+            text-transform: uppercase;
+            letter-spacing: .6px;
+        }
+        .table tbody tr { border-color: var(--border); }
+        .table tbody tr:hover { background: var(--bg-raised); }
+        .table td { vertical-align: middle; font-size: .85rem; }
+
+        .form-control, .form-select {
+            background: var(--bg-raised);
+            border-color: var(--border);
+            color: var(--text);
+            font-size: .85rem;
+        }
+        .form-control:focus, .form-select:focus {
+            background: var(--bg-raised);
+            color: var(--text);
+            border-color: var(--accent);
+            box-shadow: 0 0 0 .2rem rgba(88,166,255,.2);
+        }
+        .form-control::placeholder { color: var(--text-muted); }
+        .form-select option { background: var(--bg-raised); }
+
+        /* Level badges */
+        .badge-DEBUG { background: #6c757d !important; }
+        .badge-INFO  { background: #1f6feb !important; }
+        .badge-WARN  { background: #d29922 !important; color: #fff !important; }
+        .badge-ERROR { background: #da3633 !important; }
+
+        .pagination .page-link {
+            background: var(--bg-raised);
+            border-color: var(--border);
+            color: var(--accent);
+        }
+        .pagination .page-link:hover { background: var(--border); }
+        .pagination .page-item.active .page-link { background: #1f6feb; border-color: #1f6feb; color: #fff; }
+        .pagination .page-item.disabled .page-link { background: var(--bg-raised); color: var(--text-muted); }
+
+        .btn-outline-secondary {
+            border-color: var(--border);
+            color: var(--text-muted);
+        }
+        .btn-outline-secondary:hover { background: var(--bg-raised); color: var(--text); }
+
+        .msg-cell { max-width: 420px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+        .demo-btn { font-size: .8rem; }
+
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+        .live-dot { display:inline-block; width:8px; height:8px; border-radius:50%; background:#3fb950; animation: pulse 2s infinite; }
+    </style>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-dark px-3 mb-4">
+    <span class="navbar-brand">
+        <i class="bi bi-activity me-2 text-info"></i>Log Analyzer
+    </span>
+    <div class="d-flex align-items-center gap-3">
+        <span class="live-dot"></span>
+        <span class="text-muted small">Live</span>
+        <button class="btn btn-sm btn-outline-secondary demo-btn"
+                onclick="generateDemoLogs()"
+                title="Generate 50 sample log entries via Kafka">
+            <i class="bi bi-lightning-charge me-1"></i>Generate Demo Logs
+        </button>
+    </div>
+</nav>
+
+<div class="container-fluid px-4">
+
+    <!-- ── Stats row ── -->
+    <div class="row g-3 mb-4">
+        <!-- Total -->
+        <div class="col-6 col-md-3">
+            <div class="card p-3 h-100">
+                <div class="d-flex align-items-center gap-3">
+                    <i class="bi bi-layers stat-icon text-primary"></i>
+                    <div>
+                        <div class="text-muted small mb-1">Total Logs</div>
+                        <div class="stat-value" th:text="${metrics.totalLogs}">0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Errors -->
+        <div class="col-6 col-md-3">
+            <div class="card p-3 h-100">
+                <div class="d-flex align-items-center gap-3">
+                    <i class="bi bi-x-circle stat-icon text-danger"></i>
+                    <div>
+                        <div class="text-muted small mb-1">Errors</div>
+                        <div class="stat-value text-danger"
+                             th:text="${metrics.countByLevel.getOrDefault('ERROR', 0)}">0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Warnings -->
+        <div class="col-6 col-md-3">
+            <div class="card p-3 h-100">
+                <div class="d-flex align-items-center gap-3">
+                    <i class="bi bi-exclamation-triangle stat-icon text-warning"></i>
+                    <div>
+                        <div class="text-muted small mb-1">Warnings</div>
+                        <div class="stat-value text-warning"
+                             th:text="${metrics.countByLevel.getOrDefault('WARN', 0)}">0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Error rate -->
+        <div class="col-6 col-md-3">
+            <div class="card p-3 h-100">
+                <div class="d-flex align-items-center gap-3">
+                    <i class="bi bi-graph-up-arrow stat-icon text-info"></i>
+                    <div>
+                        <div class="text-muted small mb-1">Error Rate (1h)</div>
+                        <div class="stat-value text-info"
+                             th:text="${#numbers.formatDecimal(metrics.errorRate,1,1) + '%'}">0%</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Charts row ── -->
+    <div class="row g-3 mb-4">
+        <!-- Time series -->
+        <div class="col-md-8">
+            <div class="card p-3 h-100">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="mb-0 text-muted">
+                        <i class="bi bi-bar-chart-line me-1"></i>Logs Over Time (last 24h)
+                    </h6>
+                </div>
+                <div class="chart-wrap">
+                    <canvas id="timeSeriesChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <!-- Level distribution -->
+        <div class="col-md-4">
+            <div class="card p-3 h-100">
+                <h6 class="mb-3 text-muted">
+                    <i class="bi bi-pie-chart me-1"></i>By Log Level
+                </h6>
+                <div class="chart-wrap">
+                    <canvas id="levelChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Log table ── -->
+    <div class="card p-3 mb-4">
+
+        <!-- Filter form -->
+        <form method="get" th:action="@{/}" class="row g-2 mb-3 align-items-end">
+            <div class="col-6 col-md-2">
+                <label class="form-label text-muted small mb-1">Level</label>
+                <select name="level" class="form-select form-select-sm">
+                    <option value="">All Levels</option>
+                    <option value="DEBUG" th:selected="${filter.level == 'DEBUG'}">DEBUG</option>
+                    <option value="INFO"  th:selected="${filter.level == 'INFO'}">INFO</option>
+                    <option value="WARN"  th:selected="${filter.level == 'WARN'}">WARN</option>
+                    <option value="ERROR" th:selected="${filter.level == 'ERROR'}">ERROR</option>
+                </select>
+            </div>
+            <div class="col-6 col-md-2">
+                <label class="form-label text-muted small mb-1">Service</label>
+                <input type="text" name="service" class="form-control form-control-sm"
+                       placeholder="e.g. auth-service" th:value="${filter.service}"/>
+            </div>
+            <div class="col-6 col-md-2">
+                <label class="form-label text-muted small mb-1">From</label>
+                <input type="datetime-local" name="from" class="form-control form-control-sm"
+                       th:value="${filter.from}"/>
+            </div>
+            <div class="col-6 col-md-2">
+                <label class="form-label text-muted small mb-1">To</label>
+                <input type="datetime-local" name="to" class="form-control form-control-sm"
+                       th:value="${filter.to}"/>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label text-muted small mb-1">Search message</label>
+                <input type="text" name="q" class="form-control form-control-sm"
+                       placeholder="Full-text search..." th:value="${filter.q}"/>
+            </div>
+            <div class="col-6 col-md-1">
+                <button type="submit" class="btn btn-primary btn-sm w-100">
+                    <i class="bi bi-search"></i>
+                </button>
+            </div>
+            <div class="col-6 col-md-auto" th:if="${filter.level != null and filter.level != ''
+                                                  or filter.service != null and filter.service != ''
+                                                  or filter.from != null and filter.from != ''
+                                                  or filter.to != null and filter.to != ''
+                                                  or filter.q != null and filter.q != ''}">
+                <a th:href="@{/}" class="btn btn-outline-secondary btn-sm w-100">
+                    <i class="bi bi-x-lg"></i> Clear
+                </a>
+            </div>
+        </form>
+
+        <!-- Result count -->
+        <div class="text-muted small mb-2">
+            <span th:text="${logs.totalElements}">0</span> entries found
+            <span th:if="${logs.totalPages > 1}"
+                  th:text="' — page ' + (${logs.number + 1}) + ' of ' + ${logs.totalPages}"></span>
+        </div>
+
+        <!-- Table -->
+        <div class="table-responsive">
+            <table class="table table-sm mb-0">
+                <thead>
+                <tr>
+                    <th style="width:155px">Timestamp (UTC)</th>
+                    <th style="width:75px">Level</th>
+                    <th style="width:150px">Service</th>
+                    <th>Message</th>
+                    <th style="width:140px">Trace ID</th>
+                    <th style="width:90px">Host</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:if="${logs.empty}">
+                    <td colspan="6" class="text-center text-muted py-5">
+                        <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                        No logs match the current filters
+                    </td>
+                </tr>
+                <tr th:each="log : ${logs.content}">
+                    <td class="text-nowrap font-monospace small"
+                        th:text="${log.formattedTimestamp}"></td>
+                    <td>
+                        <span class="badge"
+                              th:classappend="'badge-' + ${log.level.name()}"
+                              th:text="${log.level.name()}"></span>
+                    </td>
+                    <td class="small" th:text="${log.serviceName}"></td>
+                    <td class="msg-cell" th:text="${log.message}" th:title="${log.message}"></td>
+                    <td class="small text-muted font-monospace" th:text="${log.traceId}"></td>
+                    <td class="small text-muted" th:text="${log.host}"></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <nav th:if="${logs.totalPages > 1}" class="mt-3 d-flex justify-content-center">
+            <ul class="pagination pagination-sm mb-0">
+                <li class="page-item" th:classappend="${logs.first} ? 'disabled'">
+                    <a class="page-link"
+                       th:href="@{/(level=${filter.level},service=${filter.service},from=${filter.from},to=${filter.to},q=${filter.q},page=${logs.number - 1})}">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+                </li>
+                <!-- show at most 7 page links around current -->
+                <th:block th:each="i : ${#numbers.sequence(
+                        T(java.lang.Math).max(0, logs.number - 3),
+                        T(java.lang.Math).min(logs.totalPages - 1, logs.number + 3))}">
+                    <li class="page-item" th:classappend="${i == logs.number} ? 'active'">
+                        <a class="page-link"
+                           th:href="@{/(level=${filter.level},service=${filter.service},from=${filter.from},to=${filter.to},q=${filter.q},page=${i})}"
+                           th:text="${i + 1}"></a>
+                    </li>
+                </th:block>
+                <li class="page-item" th:classappend="${logs.last} ? 'disabled'">
+                    <a class="page-link"
+                       th:href="@{/(level=${filter.level},service=${filter.service},from=${filter.from},to=${filter.to},q=${filter.q},page=${logs.number + 1})}">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    Chart.defaults.color = '#8b949e';
+    Chart.defaults.borderColor = '#30363d';
+
+    // ── Level Doughnut ──────────────────────────────────────────────
+    const levelData = /*[[${metrics.countByLevel}]]*/ {};
+    const LEVEL_COLORS = { DEBUG: '#6c757d', INFO: '#1f6feb', WARN: '#d29922', ERROR: '#da3633' };
+    const levelLabels = Object.keys(levelData);
+    const levelValues = Object.values(levelData);
+    const levelColors = levelLabels.map(l => LEVEL_COLORS[l] || '#6c757d');
+
+    new Chart(document.getElementById('levelChart'), {
+        type: 'doughnut',
+        data: {
+            labels: levelLabels,
+            datasets: [{
+                data: levelValues,
+                backgroundColor: levelColors,
+                borderColor: '#161b22',
+                borderWidth: 3,
+                hoverOffset: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { color: '#8b949e', padding: 12, font: { size: 12 } }
+                }
+            }
+        }
+    });
+
+    // ── Time Series Line ─────────────────────────────────────────────
+    const timeSeriesData = /*[[${metrics.timeSeriesData}]]*/ [];
+    const tsLabels = timeSeriesData.map(p => p.label);
+    const tsValues = timeSeriesData.map(p => p.count);
+
+    new Chart(document.getElementById('timeSeriesChart'), {
+        type: 'line',
+        data: {
+            labels: tsLabels,
+            datasets: [{
+                label: 'Log count',
+                data: tsValues,
+                borderColor: '#58a6ff',
+                backgroundColor: 'rgba(88,166,255,0.08)',
+                fill: true,
+                tension: 0.35,
+                pointRadius: 3,
+                pointHoverRadius: 5
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: {
+                    ticks: { maxTicksLimit: 12, font: { size: 11 } },
+                    grid: { color: '#21262d' }
+                },
+                y: {
+                    beginAtZero: true,
+                    ticks: { precision: 0, font: { size: 11 } },
+                    grid: { color: '#21262d' }
+                }
+            },
+            plugins: { legend: { display: false } }
+        }
+    });
+
+    // ── Demo generator ───────────────────────────────────────────────
+    function generateDemoLogs() {
+        fetch('/api/demo/generate?count=50', { method: 'POST' })
+            .then(r => r.json())
+            .then(data => {
+                console.log(data.message);
+                setTimeout(() => location.reload(), 1200);
+            })
+            .catch(err => console.error('Demo generation failed', err));
+    }
+    /*]]>*/
+</script>
+</body>
+</html>

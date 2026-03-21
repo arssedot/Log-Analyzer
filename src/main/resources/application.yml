@@ -1,0 +1,20 @@
+spring:
+  profiles:
+    active: dev
+
+  application:
+    name: Log-Analyzer
+
+  thymeleaf:
+    cache: false
+
+  jpa:
+    open-in-view: false
+
+server:
+  port: 8080
+
+logging:
+  level:
+    com.arssedot.loganalyzer: DEBUG
+    org.apache.kafka: WARN
