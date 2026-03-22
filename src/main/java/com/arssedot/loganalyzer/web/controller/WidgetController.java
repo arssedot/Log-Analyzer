@@ -18,8 +18,9 @@ public class WidgetController {
     private final WidgetService widgetService;
 
     @GetMapping
-    public List<WidgetDto> getWidgets(@AuthenticationPrincipal User user) {
-        return widgetService.getUserWidgets(user).stream()
+    public List<WidgetDto> getWidgets(@AuthenticationPrincipal User user,
+                                      @RequestParam(required = false) Long pageId) {
+        return widgetService.getUserWidgets(user, pageId).stream()
                 .map(WidgetDto::from)
                 .toList();
     }
@@ -27,8 +28,9 @@ public class WidgetController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public WidgetDto addWidget(@AuthenticationPrincipal User user,
+                               @RequestParam(required = false) Long pageId,
                                @RequestBody AddWidgetRequest request) {
-        Widget widget = widgetService.addWidget(user, request.type());
+        Widget widget = widgetService.addWidget(user, pageId, request.type());
         return WidgetDto.from(widget);
     }
 
@@ -40,11 +42,10 @@ public class WidgetController {
 
     @PutMapping("/order")
     public void reorder(@AuthenticationPrincipal User user,
+                        @RequestParam(required = false) Long pageId,
                         @RequestBody List<Long> orderedIds) {
-        widgetService.updatePositions(user, orderedIds);
+        widgetService.updatePositions(user, pageId, orderedIds);
     }
-
-    // ── Nested DTOs ──────────────────────────────────────────────────
 
     public record WidgetDto(Long id, String type, String title, int position, String size) {
         static WidgetDto from(Widget w) {

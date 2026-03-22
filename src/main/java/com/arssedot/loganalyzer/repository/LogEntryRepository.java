@@ -36,4 +36,17 @@ public interface LogEntryRepository extends JpaRepository<LogEntry, Long>, JpaSp
     List<LogEntry> findTopByLevelOrderByTimestampDesc(@Param("level") LogLevel level, Pageable pageable);
 
     Page<LogEntry> findAllByOrderByTimestampDesc(Pageable pageable);
+
+    // Service-scoped variants for per-page metrics
+    long countByServiceName(String serviceName);
+
+    long countByServiceNameAndTimestampAfter(String serviceName, Instant since);
+
+    long countByServiceNameAndLevelAndTimestampAfter(String serviceName, LogLevel level, Instant since);
+
+    @Query("SELECT l.level, COUNT(l) FROM LogEntry l WHERE l.serviceName = :svc GROUP BY l.level")
+    List<Object[]> countGroupedByLevelForService(@Param("svc") String serviceName);
+
+    @Query("SELECT l FROM LogEntry l WHERE l.serviceName = :svc AND l.timestamp > :since ORDER BY l.timestamp ASC")
+    List<LogEntry> findByServiceNameAndTimestampAfterOrderByTimestampAsc(@Param("svc") String serviceName, @Param("since") Instant since);
 }

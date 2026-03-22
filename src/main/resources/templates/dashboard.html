@@ -133,6 +133,19 @@
         /* ── Clear Logs modal ────────────────────────────────────────── */
         .scope-selected { border-color: var(--accent) !important; background: var(--bg-raised); }
 
+        /* ── Page tabs ────────────────────────────────────────────────── */
+        .page-tabs-bar { background: var(--bg-surface); border-bottom: 1px solid var(--border); padding: 0 1.5rem; display: flex; align-items: center; gap: 2px; overflow-x: auto; }
+        .page-tab { display: flex; align-items: center; gap: 6px; padding: 10px 16px; border-bottom: 2px solid transparent; font-size: .82rem; font-weight: 500; color: var(--text-muted); cursor: pointer; white-space: nowrap; background: none; border-top: none; border-left: none; border-right: none; transition: color .15s, border-color .15s; }
+        .page-tab:hover { color: var(--text); }
+        .page-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+        .page-tab-service { font-size: .68rem; color: var(--text-muted); background: var(--bg-raised); border-radius: 4px; padding: 1px 5px; }
+        .page-tab.active .page-tab-service { color: var(--accent); background: rgba(88,166,255,.1); }
+        .page-tab-del { opacity: 0; background: none; border: none; color: var(--text-muted); padding: 2px 3px; border-radius: 3px; font-size: .75rem; line-height: 1; cursor: pointer; transition: opacity .15s, color .15s, background .15s; }
+        .page-tab:hover .page-tab-del { opacity: .6; }
+        .page-tab-del:hover { opacity: 1 !important; color: #f85149; background: rgba(248,81,73,.12); }
+        .page-tab-add { display: flex; align-items: center; gap: 4px; padding: 8px 10px; font-size: .8rem; color: var(--text-muted); cursor: pointer; background: none; border: none; border-radius: 6px; transition: color .15s, background .15s; margin-left: 4px; flex-shrink: 0; }
+        .page-tab-add:hover { color: var(--text); background: var(--bg-raised); }
+
         /* ── User avatar (navbar + settings) ─────────────────────────── */
         .user-avatar { width:32px; height:32px; border-radius:50%; background:var(--accent); color:#fff; display:flex; align-items:center; justify-content:center; font-size:.75rem; font-weight:700; overflow:hidden; flex-shrink:0; cursor:pointer; border:2px solid transparent; transition:border-color .2s; }
         .user-avatar:hover { border-color:var(--accent); }
@@ -206,7 +219,14 @@
     </div>
 </nav>
 
-<div class="container-fluid px-4">
+<!-- ── Page Tabs ──────────────────────────────────────────────────────── -->
+<div class="page-tabs-bar mb-0" id="pageTabs">
+    <button class="page-tab-add" onclick="openAddPageModal()" id="addPageBtn">
+        <i class="bi bi-plus-lg"></i><span data-i18n="page.addPage">New page</span>
+    </button>
+</div>
+
+<div class="container-fluid px-4 pt-3">
 
     <!-- ── Widget Grid ─────────────────────────────────────────────── -->
     <div id="widget-grid" class="row g-3 mb-4"></div>
@@ -371,6 +391,39 @@
     </div>
 </div>
 
+<!-- ── Add / Edit Page Modal ─────────────────────────────────────────── -->
+<div class="modal fade" id="pageModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="pageModalTitle"><i class="bi bi-layout-text-window me-2"></i><span data-i18n="page.newPage">New Page</span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body pb-2">
+                <div class="mb-3">
+                    <label class="form-label text-muted small mb-1" data-i18n="page.name">Page name</label>
+                    <input type="text" id="pageNameInput" class="form-control form-control-sm" maxlength="100"
+                           placeholder="My Service" data-i18n-placeholder="page.namePlaceholder"/>
+                </div>
+                <div>
+                    <label class="form-label text-muted small mb-1" data-i18n="page.service">Service name (optional)</label>
+                    <input type="text" id="pageServiceInput" class="form-control form-control-sm" maxlength="100"
+                           placeholder="auth-service" data-i18n-placeholder="page.servicePlaceholder"/>
+                    <div class="form-text text-muted" style="font-size:.72rem;" data-i18n="page.serviceHint">
+                        Logs and metrics will be filtered to this service automatically.
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal" data-i18n="settings.cancel">Cancel</button>
+                <button type="button" class="btn btn-primary btn-sm" id="pageModalSaveBtn" onclick="savePageModal()">
+                    <i class="bi bi-check2 me-1"></i><span id="pageModalSaveLabel" data-i18n="page.create">Create</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- ── Settings Modal ────────────────────────────────────────────────── -->
 <div class="modal fade" id="settingsModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
@@ -478,6 +531,10 @@ let logTotalPages = 0;
 // System metrics
 let systemMetrics = null;
 
+// Dashboard pages
+let currentPage   = null;  // { id, name, serviceName, position }
+let _editingPageId = null; // for edit page modal
+
 // Profile
 let userProfile   = null;
 let _pendingLang  = null;
@@ -513,6 +570,13 @@ const I18N = {
         'settings.language':'Language', 'settings.save':'Save', 'settings.saved':'Saved!',
         'settings.cancel':'Cancel',
         'stream.logs':' logs', 'nav.live':'Live', 'nav.updated':'Updated',
+        'page.addPage':'New page', 'page.newPage':'New Page', 'page.name':'Page name',
+        'page.namePlaceholder':'My Service', 'page.service':'Service name (optional)',
+        'page.servicePlaceholder':'auth-service',
+        'page.serviceHint':'Logs and metrics will be filtered to this service automatically.',
+        'page.create':'Create', 'page.save':'Save', 'page.allLogs':'All logs',
+        'page.deleteConfirm':'Delete page?', 'page.lastPage':'Cannot delete the last page.',
+        'page.edit':'Edit page',
     },
     ru: {
         'nav.addWidget':'Добавить виджет', 'nav.startStream':'Начать поток', 'nav.stopStream':'Остановить поток',
@@ -542,6 +606,13 @@ const I18N = {
         'settings.language':'Язык', 'settings.save':'Сохранить', 'settings.saved':'Сохранено!',
         'settings.cancel':'Отмена',
         'stream.logs':' логов', 'nav.live':'Активно', 'nav.updated':'Обновлено',
+        'page.addPage':'Новая страница', 'page.newPage':'Новая страница', 'page.name':'Название страницы',
+        'page.namePlaceholder':'Мой сервис', 'page.service':'Имя сервиса (необязательно)',
+        'page.servicePlaceholder':'auth-service',
+        'page.serviceHint':'Логи и метрики будут автоматически фильтроваться по этому сервису.',
+        'page.create':'Создать', 'page.save':'Сохранить', 'page.allLogs':'Все логи',
+        'page.deleteConfirm':'Удалить страницу?', 'page.lastPage':'Нельзя удалить последнюю страницу.',
+        'page.edit':'Редактировать страницу',
     }
 };
 function t(key) { return I18N[currentLang]?.[key] ?? I18N.en[key] ?? key; }
@@ -593,14 +664,13 @@ function colClass(w) { return SIZE_CLASS[w.size] || WIDGET_DEFS[w.type]?.col || 
 // ════════════════════════════════════════════════════════════════════
 window.addEventListener('DOMContentLoaded', () => {
     document.getElementById('themeToggle').checked = !isDark();
-    applyI18n();          // apply saved language immediately
+    applyI18n();
     buildAddWidgetModal();
     readFilterFromUrl();
     prefillFilterForm();
-    loadProfile();        // loads name, avatar, language from server
-    loadDashboard();
+    loadProfile();
+    loadPages();          // loads pages, then triggers loadDashboard + fetchAndRenderLog
     fetchSystemMetrics();
-    fetchAndRenderLog();
     startPeriodicRefresh();
 });
 
@@ -644,9 +714,13 @@ function prefillFilterForm() {
 
 function applyFilter(event) {
     event?.preventDefault();
+    const fService = document.getElementById('fService');
+    // Don't override page-locked service
+    const serviceVal = (currentPage?.serviceName && fService.readOnly)
+        ? '' : fService.value;
     logFilter = {
         level:   document.getElementById('fLevel').value,
-        service: document.getElementById('fService').value,
+        service: serviceVal,
         from:    document.getElementById('fFrom').value,
         to:      document.getElementById('fTo').value,
         q:       document.getElementById('fQ').value,
@@ -703,6 +777,10 @@ function updateClearBtn() {
 async function fetchAndRenderLog() {
     const p = new URLSearchParams();
     Object.entries(logFilter).forEach(([k, v]) => { if (v !== '' && v !== null) p.set(k, v); });
+    // If page has a serviceName and no explicit service filter is set, auto-apply it
+    if (currentPage?.serviceName && !logFilter.service) {
+        p.set('service', currentPage.serviceName);
+    }
     const data = await fetch('/api/logs?' + p).then(r => r.json())
         .catch(() => ({ content:[], totalElements:0, totalPages:1, number:0, first:true, last:true }));
     renderLog(data);
@@ -787,9 +865,11 @@ function renderPagination(cur, total, first, last) {
 // Widget dashboard load
 // ════════════════════════════════════════════════════════════════════
 async function loadDashboard() {
+    const svcParam = currentPage?.serviceName ? `?service=${encodeURIComponent(currentPage.serviceName)}` : '';
+    const pageParam = currentPage ? `?pageId=${currentPage.id}` : '';
     const [metrics, widgets] = await Promise.all([
-        fetch('/api/metrics/summary').then(r => r.json()),
-        fetch('/api/widgets').then(r => r.json()),
+        fetch('/api/metrics/summary' + svcParam).then(r => r.json()),
+        fetch('/api/widgets' + pageParam).then(r => r.json()),
     ]).catch(e => { console.error(e); return [{}, []]; });
     metricsCache = metrics;
     renderAllWidgets(widgets, metrics);
@@ -993,7 +1073,8 @@ function initSortable() {
 }
 async function saveWidgetOrder() {
     const ids = [...document.querySelectorAll('#widget-grid [data-widget-id]')].map(el=>Number(el.dataset.widgetId));
-    await fetch('/api/widgets/order',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(ids)}).catch(console.warn);
+    const pageParam = currentPage ? `?pageId=${currentPage.id}` : '';
+    await fetch('/api/widgets/order' + pageParam,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(ids)}).catch(console.warn);
 }
 
 // ════════════════════════════════════════════════════════════════════
@@ -1004,11 +1085,15 @@ function startPeriodicRefresh() {
     setInterval(periodicFullRefresh, 30_000);
 }
 
+function metricsUrl() {
+    return '/api/metrics/summary' + (currentPage?.serviceName ? `?service=${encodeURIComponent(currentPage.serviceName)}` : '');
+}
+
 async function periodicStatRefresh() {
     if (streamActive) return; // stream handles its own refresh
     try {
         const [m, sysM] = await Promise.all([
-            fetch('/api/metrics/summary').then(r=>r.json()),
+            fetch(metricsUrl()).then(r=>r.json()),
             fetch('/api/system/metrics').then(r=>r.json()),
         ]);
         metricsCache   = m;
@@ -1116,7 +1201,7 @@ function startStream() {
 
         // Refresh metrics + stats + gauges
         const [m, sysM] = await Promise.all([
-            fetch('/api/metrics/summary').then(r=>r.json()).catch(()=>metricsCache),
+            fetch(metricsUrl()).then(r=>r.json()).catch(()=>metricsCache),
             fetch('/api/system/metrics').then(r=>r.json()).catch(()=>systemMetrics),
         ]);
         if (m) {
@@ -1178,7 +1263,8 @@ function updateStreamUI() {
 // Add / Remove widget
 // ════════════════════════════════════════════════════════════════════
 async function addWidget(type) {
-    const res = await fetch('/api/widgets',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type})});
+    const pageParam = currentPage ? `?pageId=${currentPage.id}` : '';
+    const res = await fetch('/api/widgets' + pageParam,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type})});
     if (!res.ok) return;
     const widget  = await res.json();
     const m = metricsCache ?? await fetch('/api/metrics/summary').then(r=>r.json()).catch(()=>({}));
@@ -1342,6 +1428,131 @@ async function uploadAvatar(input) {
         renderAvatarEl(document.getElementById('settingsAvatar'), userProfile);
     }
     input.value = '';
+}
+
+// ════════════════════════════════════════════════════════════════════
+// Dashboard Pages
+// ════════════════════════════════════════════════════════════════════
+async function loadPages() {
+    let pages = await fetch('/api/pages').then(r => r.json()).catch(() => []);
+    if (!pages.length) pages = [{ id: null, name: 'Default', serviceName: null, position: 0 }];
+    // Restore last active page from sessionStorage
+    const savedId = parseInt(sessionStorage.getItem('la-pageId'));
+    currentPage = pages.find(p => p.id === savedId) || pages[0];
+    renderPageTabs(pages);
+    applyPageContext();
+    loadDashboard();
+    fetchAndRenderLog();
+}
+
+function renderPageTabs(pages) {
+    const bar = document.getElementById('pageTabs');
+    // Remove old tabs (keep the add button)
+    [...bar.querySelectorAll('.page-tab')].forEach(el => el.remove());
+    const addBtn = document.getElementById('addPageBtn');
+    const isLast = pages.length <= 1;
+    pages.forEach(page => {
+        const tab = document.createElement('button');
+        tab.className = 'page-tab' + (page.id === currentPage?.id ? ' active' : '');
+        tab.dataset.pageId = page.id;
+        const svcBadge = page.serviceName
+            ? `<span class="page-tab-service">${esc(page.serviceName)}</span>` : '';
+        tab.innerHTML = `<span>${esc(page.name)}</span>${svcBadge}` +
+            `<span class="page-tab-del" title="${t('page.deleteConfirm')}" onclick="deletePage(event,${page.id},${isLast})"><i class="bi bi-x"></i></span>`;
+        tab.addEventListener('click', (e) => {
+            if (e.target.closest('.page-tab-del')) return;
+            switchPage(page);
+        });
+        bar.insertBefore(tab, addBtn);
+    });
+}
+
+function switchPage(page) {
+    if (currentPage?.id === page.id) return;
+    currentPage = page;
+    sessionStorage.setItem('la-pageId', page.id ?? '');
+    // Update active tab
+    document.querySelectorAll('.page-tab').forEach(t => {
+        t.classList.toggle('active', Number(t.dataset.pageId) === page.id);
+    });
+    applyPageContext();
+    loadDashboard();
+    logFilter.page = 0;
+    fetchAndRenderLog();
+}
+
+function applyPageContext() {
+    // If page has a service, set the service filter field as read-only
+    const fService = document.getElementById('fService');
+    if (!fService) return;
+    if (currentPage?.serviceName) {
+        fService.value = currentPage.serviceName;
+        fService.readOnly = true;
+        fService.title = t('page.serviceHint');
+    } else {
+        fService.readOnly = false;
+        fService.title = '';
+        // Don't override manually typed service filters
+        if (fService.value === (currentPage?.serviceName || '')) fService.value = logFilter.service;
+    }
+}
+
+// Add Page modal
+function openAddPageModal() {
+    _editingPageId = null;
+    document.getElementById('pageNameInput').value = '';
+    document.getElementById('pageServiceInput').value = '';
+    document.getElementById('pageModalTitle').querySelector('[data-i18n]').setAttribute('data-i18n','page.newPage');
+    document.getElementById('pageModalTitle').querySelector('[data-i18n]').textContent = t('page.newPage');
+    document.getElementById('pageModalSaveLabel').setAttribute('data-i18n','page.create');
+    document.getElementById('pageModalSaveLabel').textContent = t('page.create');
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('pageModal')).show();
+    setTimeout(() => document.getElementById('pageNameInput').focus(), 300);
+}
+
+async function savePageModal() {
+    const name = document.getElementById('pageNameInput').value.trim();
+    const svc  = document.getElementById('pageServiceInput').value.trim();
+    if (!name) { document.getElementById('pageNameInput').classList.add('is-invalid'); return; }
+    document.getElementById('pageNameInput').classList.remove('is-invalid');
+
+    let page;
+    if (_editingPageId) {
+        const res = await fetch(`/api/pages/${_editingPageId}`, {
+            method:'PUT', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ name, serviceName: svc || null })
+        });
+        if (!res.ok) return;
+        page = await res.json();
+    } else {
+        const res = await fetch('/api/pages', {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ name, serviceName: svc || null })
+        });
+        if (!res.ok) return;
+        page = await res.json();
+    }
+
+    bootstrap.Modal.getInstance(document.getElementById('pageModal'))?.hide();
+    await loadPages();
+    if (!_editingPageId) {
+        // Switch to newly created page
+        const freshPages = await fetch('/api/pages').then(r => r.json()).catch(() => []);
+        const newPage = freshPages.find(p => p.id === page.id);
+        if (newPage) switchPage(newPage);
+    }
+    _editingPageId = null;
+}
+
+async function deletePage(event, pageId, isLast) {
+    event.stopPropagation();
+    if (isLast) { alert(t('page.lastPage')); return; }
+    if (!confirm(t('page.deleteConfirm'))) return;
+    const res = await fetch(`/api/pages/${pageId}`, { method:'DELETE' });
+    if (!res.ok) { if (res.status === 400 || res.status === 409) alert(t('page.lastPage')); return; }
+    // If deleted the active page, switch to first available
+    if (currentPage?.id === pageId) currentPage = null;
+    loadPages();
 }
 
 async function executeClearLogs() {

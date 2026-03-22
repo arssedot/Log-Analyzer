@@ -6,13 +6,13 @@ import lombok.*;
 import java.time.Instant;
 
 @Entity
-@Table(name = "widgets")
+@Table(name = "dashboard_pages")
 @Getter
 @Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Widget {
+public class DashboardPage {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -22,22 +22,15 @@ public class Widget {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "page_id")
-    private DashboardPage page;
-
-    @Column(nullable = false, length = 50)
-    private String type;
-
     @Column(nullable = false, length = 100)
-    private String title;
+    private String name;
+
+    @Column(name = "service_name", length = 100)
+    private String serviceName;
 
     @Column(nullable = false)
-    private int position;
-
-    @Column(nullable = false, length = 10)
     @Builder.Default
-    private String size = "MEDIUM";
+    private int position = 0;
 
     @Column(name = "created_at", updatable = false)
     private Instant createdAt;

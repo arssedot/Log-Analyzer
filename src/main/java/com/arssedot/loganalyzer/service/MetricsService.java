@@ -29,24 +29,33 @@ public class MetricsService {
 
     @Transactional(readOnly = true)
     public MetricsSummaryDto getSummary() {
-        long total = repository.count();
+        return getSummary(null);
+    }
 
-        Map<String, Long> countByLevel = buildCountByLevel();
+    @Transactional(readOnly = true)
+    public MetricsSummaryDto getSummary(String serviceName) {
+        boolean scoped = serviceName != null && !serviceName.isBlank();
+
+        long total = scoped ? repository.countByServiceName(serviceName) : repository.count();
+
+        Map<String, Long> countByLevel = scoped ? buildCountByLevelForService(serviceName) : buildCountByLevel();
 
         Instant oneHourAgo = Instant.now().minus(1, ChronoUnit.HOURS);
-        long logsLastHour = repository.countByTimestampAfter(oneHourAgo);
+        long logsLastHour = scoped
+                ? repository.countByServiceNameAndTimestampAfter(serviceName, oneHourAgo)
+                : repository.countByTimestampAfter(oneHourAgo);
 
-        double errorRate = computeErrorRate(logsLastHour, oneHourAgo);
+        double errorRate = computeErrorRate(logsLastHour, oneHourAgo, serviceName);
 
-        long servicesCount = repository.countDistinctServiceNames();
+        long servicesCount = scoped ? 1L : repository.countDistinctServiceNames();
 
-        List<ServiceStat> topServices = repository
-                .findTopServices(PageRequest.of(0, 10))
-                .stream()
-                .map(row -> new ServiceStat((String) row[0], (Long) row[1]))
-                .toList();
+        List<ServiceStat> topServices = scoped
+                ? List.of(new ServiceStat(serviceName, total))
+                : repository.findTopServices(PageRequest.of(0, 10)).stream()
+                        .map(row -> new ServiceStat((String) row[0], (Long) row[1]))
+                        .toList();
 
-        List<TimeSeriesPoint> timeSeries = buildHourlyTimeSeries(24);
+        List<TimeSeriesPoint> timeSeries = buildHourlyTimeSeries(24, scoped ? serviceName : null);
 
         return new MetricsSummaryDto(total, countByLevel, errorRate, topServices, timeSeries, logsLastHour, servicesCount);
     }
@@ -62,15 +71,31 @@ public class MetricsService {
         return result;
     }
 
-    private double computeErrorRate(long totalRecent, Instant oneHourAgo) {
+    private Map<String, Long> buildCountByLevelForService(String serviceName) {
+        Map<String, Long> result = new LinkedHashMap<>();
+        for (LogLevel level : LogLevel.values()) {
+            result.put(level.name(), 0L);
+        }
+        repository.countGroupedByLevelForService(serviceName).forEach(row ->
+                result.put(((LogLevel) row[0]).name(), (Long) row[1])
+        );
+        return result;
+    }
+
+    private double computeErrorRate(long totalRecent, Instant oneHourAgo, String serviceName) {
         if (totalRecent == 0) return 0.0;
-        long errors = repository.countByLevelAndTimestampAfter(LogLevel.ERROR, oneHourAgo);
+        boolean scoped = serviceName != null && !serviceName.isBlank();
+        long errors = scoped
+                ? repository.countByServiceNameAndLevelAndTimestampAfter(serviceName, LogLevel.ERROR, oneHourAgo)
+                : repository.countByLevelAndTimestampAfter(LogLevel.ERROR, oneHourAgo);
         return Math.round((errors * 100.0 / totalRecent) * 10.0) / 10.0;
     }
 
-    private List<TimeSeriesPoint> buildHourlyTimeSeries(int hours) {
+    private List<TimeSeriesPoint> buildHourlyTimeSeries(int hours, String serviceName) {
         Instant since = Instant.now().minus(hours, ChronoUnit.HOURS).truncatedTo(ChronoUnit.HOURS);
-        List<LogEntry> entries = repository.findByTimestampAfterOrderByTimestampAsc(since);
+        List<LogEntry> entries = (serviceName != null)
+                ? repository.findByServiceNameAndTimestampAfterOrderByTimestampAsc(serviceName, since)
+                : repository.findByTimestampAfterOrderByTimestampAsc(since);
 
         Map<String, Long> buckets = new LinkedHashMap<>();
         Instant cursor = since;

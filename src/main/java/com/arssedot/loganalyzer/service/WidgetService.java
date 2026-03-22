@@ -1,7 +1,9 @@
 package com.arssedot.loganalyzer.service;
 
+import com.arssedot.loganalyzer.domain.DashboardPage;
 import com.arssedot.loganalyzer.domain.User;
 import com.arssedot.loganalyzer.domain.Widget;
+import com.arssedot.loganalyzer.repository.DashboardPageRepository;
 import com.arssedot.loganalyzer.repository.WidgetRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
@@ -16,21 +18,25 @@ import java.util.NoSuchElementException;
 public class WidgetService {
 
     private final WidgetRepository widgetRepository;
+    private final DashboardPageRepository pageRepository;
 
     @Transactional(readOnly = true)
-    public List<Widget> getUserWidgets(User user) {
-        List<Widget> widgets = widgetRepository.findByUserIdOrderByPosition(user.getId());
+    public List<Widget> getUserWidgets(User user, Long pageId) {
+        DashboardPage page = resolvePageForUser(user, pageId);
+        List<Widget> widgets = widgetRepository.findByPageIdOrderByPosition(page.getId());
         if (widgets.isEmpty()) {
-            return createDefaultWidgets(user);
+            return createDefaultWidgets(user, page);
         }
         return widgets;
     }
 
     @Transactional
-    public Widget addWidget(User user, String type) {
-        int nextPos = widgetRepository.countByUserId(user.getId());
+    public Widget addWidget(User user, Long pageId, String type) {
+        DashboardPage page = resolvePageForUser(user, pageId);
+        int nextPos = widgetRepository.countByPageId(page.getId());
         Widget widget = Widget.builder()
                 .user(user)
+                .page(page)
                 .type(type)
                 .title(defaultTitle(type))
                 .size(defaultSize(type))
@@ -50,8 +56,9 @@ public class WidgetService {
     }
 
     @Transactional
-    public List<Widget> updatePositions(User user, List<Long> orderedIds) {
-        List<Widget> widgets = widgetRepository.findByUserIdOrderByPosition(user.getId());
+    public List<Widget> updatePositions(User user, Long pageId, List<Long> orderedIds) {
+        DashboardPage page = resolvePageForUser(user, pageId);
+        List<Widget> widgets = widgetRepository.findByPageIdOrderByPosition(page.getId());
         for (Widget w : widgets) {
             int idx = orderedIds.indexOf(w.getId());
             if (idx >= 0) w.setPosition(idx);
@@ -59,7 +66,24 @@ public class WidgetService {
         return widgetRepository.saveAll(widgets);
     }
 
-    private List<Widget> createDefaultWidgets(User user) {
+    private DashboardPage resolvePageForUser(User user, Long pageId) {
+        if (pageId != null) {
+            DashboardPage page = pageRepository.findById(pageId)
+                    .orElseThrow(() -> new NoSuchElementException("Page not found: " + pageId));
+            if (!page.getUser().getId().equals(user.getId())) {
+                throw new AccessDeniedException("Page does not belong to current user");
+            }
+            return page;
+        }
+        return pageRepository.findFirstByUserIdOrderByPosition(user.getId())
+                .orElseGet(() -> {
+                    DashboardPage def = DashboardPage.builder()
+                            .user(user).name("Default").position(0).build();
+                    return pageRepository.save(def);
+                });
+    }
+
+    private List<Widget> createDefaultWidgets(User user, DashboardPage page) {
         record Def(String type, String size, int pos) {}
         List<Def> defaults = List.of(
                 new Def("STAT_TOTAL",      "SMALL",  0),
@@ -74,6 +98,7 @@ public class WidgetService {
         List<Widget> list = defaults.stream()
                 .map(d -> Widget.builder()
                         .user(user)
+                        .page(page)
                         .type(d.type())
                         .title(defaultTitle(d.type()))
                         .size(d.size())
@@ -113,8 +138,8 @@ public class WidgetService {
             case "CHART_TIMELINE", "TABLE_RECENT",
                  "TABLE_ERRORS"                              -> "LARGE";
             case "CHART_LEVEL", "CHART_SERVICES",
-                 "CHART_LEVEL_BAR"                           -> "MEDIUM";
-            case "GAUGE_CPU", "GAUGE_RAM", "GAUGE_DISK"      -> "MEDIUM";
+                 "CHART_LEVEL_BAR",
+                 "GAUGE_CPU", "GAUGE_RAM", "GAUGE_DISK"      -> "MEDIUM";
             default                                          -> "MEDIUM";
         };
     }
