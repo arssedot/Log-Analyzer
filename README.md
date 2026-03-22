@@ -50,7 +50,7 @@
 ### 1. Клонировать репозиторий
 
 ```bash
-git clone https://github.com/ВАШ_USERNAME/log-analyzer.git
+git clone https://github.com/username/log-analyzer.git
 cd log-analyzer
 ```
 
@@ -207,4 +207,24 @@ src/main/resources/
 | `KAFKA_BOOTSTRAP_SERVERS` | `kafka:9092` | Адрес Kafka-брокера |
 
 ---
+
+## Иллюстрации интерфейса
+
+### 1. Настройки
+<img width="857" height="786" alt="Снимок экрана 2026-03-22 014957" src="https://github.com/user-attachments/assets/3dc53062-0303-42ff-914d-38f219050b60" />
+
+
+### 2. Панель виджетов
+<img width="1397" height="876" alt="Снимок экрана 2026-03-22 015151" src="https://github.com/user-attachments/assets/f1997b95-94a0-4213-b391-c123ecd7ea97" />
+
+
+### 3. Развернутые виджеты
+<img width="2527" height="1178" alt="Снимок экрана 2026-03-22 015114" src="https://github.com/user-attachments/assets/f53c26fc-1e51-4bff-bb74-e61f14c4e84c" />
+
+
+### 4. Таблица с логами
+<img width="2524" height="1162" alt="Снимок экрана 2026-03-22 015136" src="https://github.com/user-attachments/assets/6e2b210a-59ef-476e-b92f-50734bcdff11" />
+
+
+
 
