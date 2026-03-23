@@ -60,17 +60,17 @@ public class LogKafkaProducer {
                     ? String.format(messageTemplate, RANDOM.nextInt(10000))
                     : messageTemplate;
 
-            Instant ts = Instant.now().minusSeconds(RANDOM.nextInt(86400));
+            Instant logTimestamp = Instant.now().minusSeconds(RANDOM.nextInt(86400));
 
-            var request = new LogIngestRequest(
-                    ts,
+            LogIngestRequest logRequest = new LogIngestRequest(
+                    logTimestamp,
                     level,
                     service,
                     message,
                     UUID.randomUUID().toString().substring(0, 16),
                     "host-" + (RANDOM.nextInt(5) + 1)
             );
-            send(request);
+            send(logRequest);
         }
     }
 }

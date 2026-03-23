@@ -13,18 +13,18 @@ import java.lang.management.OperatingSystemMXBean;
 @Slf4j
 public class SystemMetricsService {
 
-    private final OperatingSystemMXBean stdBean;
+    private final OperatingSystemMXBean standardOsBean;
     @SuppressWarnings("restriction")
-    private final com.sun.management.OperatingSystemMXBean sunBean;
+    private final com.sun.management.OperatingSystemMXBean sunOsBean;
 
     private volatile double cpuPercent = 0.0;
 
     @SuppressWarnings({"restriction", "unchecked"})
     public SystemMetricsService() {
-        var raw = ManagementFactory.getOperatingSystemMXBean();
-        stdBean = raw;
-        sunBean = raw instanceof com.sun.management.OperatingSystemMXBean b ? b : null;
-        if (sunBean == null) {
+        OperatingSystemMXBean rawOsBean = ManagementFactory.getOperatingSystemMXBean();
+        standardOsBean = rawOsBean;
+        sunOsBean = rawOsBean instanceof com.sun.management.OperatingSystemMXBean castedBean ? castedBean : null;
+        if (sunOsBean == null) {
             log.warn("com.sun.management.OperatingSystemMXBean unavailable — CPU will use load-average fallback");
         }
     }
@@ -32,48 +32,51 @@ public class SystemMetricsService {
     @Scheduled(fixedDelay = 2_000)
     @SuppressWarnings("restriction")
     void refreshCpu() {
-        if (sunBean != null) {
-            double load = sunBean.getCpuLoad();
-            cpuPercent = load >= 0 ? load * 100.0 : 0.0;
+        if (sunOsBean != null) {
+            double cpuLoad = sunOsBean.getCpuLoad();
+            cpuPercent = cpuLoad >= 0 ? cpuLoad * 100.0 : 0.0;
         } else {
-            double avg = stdBean.getSystemLoadAverage();
-            cpuPercent = avg >= 0
-                    ? Math.min(100.0, avg / stdBean.getAvailableProcessors() * 100.0)
+            double loadAverage = standardOsBean.getSystemLoadAverage();
+            cpuPercent = loadAverage >= 0
+                    ? Math.min(100.0, loadAverage / standardOsBean.getAvailableProcessors() * 100.0)
                     : 0.0;
         }
     }
 
     @SuppressWarnings("restriction")
     public SystemMetricsDto getMetrics() {
-        int cores = stdBean.getAvailableProcessors();
+        int cpuCores = standardOsBean.getAvailableProcessors();
 
-        long totalMem, freeMem;
-        if (sunBean != null) {
-            totalMem = sunBean.getTotalMemorySize();
-            freeMem  = sunBean.getFreeMemorySize();
+        long totalMemory, freeMemory;
+        if (sunOsBean != null) {
+            totalMemory = sunOsBean.getTotalMemorySize();
+            freeMemory  = sunOsBean.getFreeMemorySize();
         } else {
-            Runtime rt = Runtime.getRuntime();
-            totalMem = rt.maxMemory();
-            freeMem  = rt.freeMemory();
+            Runtime runtime = Runtime.getRuntime();
+            totalMemory = runtime.maxMemory();
+            freeMemory  = runtime.freeMemory();
         }
-        long usedMem = Math.max(0, totalMem - freeMem);
+        long usedMemory = Math.max(0, totalMemory - freeMemory);
 
-        long diskTotal = 0, diskFree = 0;
+        long totalDisk = 0, freeDisk = 0;
         for (File root : File.listRoots()) {
-            diskTotal += root.getTotalSpace();
-            diskFree  += root.getUsableSpace();
+            totalDisk += root.getTotalSpace();
+            freeDisk  += root.getUsableSpace();
         }
-        long diskUsed = Math.max(0, diskTotal - diskFree);
+        long usedDisk = Math.max(0, totalDisk - freeDisk);
 
         return new SystemMetricsDto(
-                round(cpuPercent), cores,
-                usedMem, totalMem, pct(usedMem, totalMem),
-                diskUsed, diskTotal, pct(diskUsed, diskTotal)
+                roundToOneDecimal(cpuPercent), cpuCores,
+                usedMemory, totalMemory, calculatePercentage(usedMemory, totalMemory),
+                usedDisk, totalDisk, calculatePercentage(usedDisk, totalDisk)
         );
     }
 
-    private static double round(double v) { return Math.round(v * 10.0) / 10.0; }
-    private static double pct(long used, long total) {
-        return total > 0 ? round(used * 100.0 / total) : 0.0;
+    private static double roundToOneDecimal(double value) {
+        return Math.round(value * 10.0) / 10.0;
+    }
+
+    private static double calculatePercentage(long used, long total) {
+        return total > 0 ? roundToOneDecimal(used * 100.0 / total) : 0.0;
     }
 }

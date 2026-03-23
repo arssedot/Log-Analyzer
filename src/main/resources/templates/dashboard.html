@@ -462,11 +462,11 @@
                         <div class="btn-group btn-group-sm" role="group">
                             <button type="button" id="langBtnEn"
                                     class="btn btn-outline-secondary" onclick="selectLang('en')">
-                                🇬🇧 English
+                                <span style="font-weight:700;font-size:.75rem;letter-spacing:.5px;">EN</span> English
                             </button>
                             <button type="button" id="langBtnRu"
                                     class="btn btn-outline-secondary" onclick="selectLang('ru')">
-                                🇷🇺 Русский
+                                <span style="font-weight:700;font-size:.75rem;letter-spacing:.5px;">RU</span> Русский
                             </button>
                         </div>
                     </div>
@@ -506,14 +506,20 @@
 // ════════════════════════════════════════════════════════════════════
 function isDark() { return document.documentElement.getAttribute('data-bs-theme') === 'dark'; }
 function chartColors() {
-    const d = isDark();
-    return { grid: d?'#21262d':'#e8ecef', tick: d?'#8b949e':'#6a737d', legend: d?'#8b949e':'#6a737d',
-             border: d?'#161b22':'#ffffff', line: d?'#58a6ff':'#0969da', lineFill: d?'rgba(88,166,255,.07)':'rgba(9,105,218,.07)' };
+    const darkTheme = isDark();
+    return {
+        grid:     darkTheme ? '#21262d' : '#e8ecef',
+        tick:     darkTheme ? '#8b949e' : '#6a737d',
+        legend:   darkTheme ? '#8b949e' : '#6a737d',
+        border:   darkTheme ? '#161b22' : '#ffffff',
+        line:     darkTheme ? '#58a6ff' : '#0969da',
+        lineFill: darkTheme ? 'rgba(88,166,255,.07)' : 'rgba(9,105,218,.07)',
+    };
 }
-function toggleTheme(cb) {
-    const t = cb.checked ? 'light' : 'dark';
-    document.documentElement.setAttribute('data-bs-theme', t);
-    localStorage.setItem('la-theme', t);
+function toggleTheme(themeCheckbox) {
+    const newTheme = themeCheckbox.checked ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-bs-theme', newTheme);
+    localStorage.setItem('la-theme', newTheme);
     applyAllChartThemes();
 }
 
@@ -621,10 +627,10 @@ function applyI18n() {
     document.querySelectorAll('[data-i18n-placeholder]').forEach(el => { el.placeholder = t(el.getAttribute('data-i18n-placeholder')); });
     // Stream button text is managed by updateStreamUI()
     updateStreamUI();
-    // Language buttons highlight
-    const enBtn = document.getElementById('langBtnEn'), ruBtn = document.getElementById('langBtnRu');
-    if (enBtn) { enBtn.className = 'btn btn-outline-secondary btn-sm' + (currentLang==='en' ? ' lang-btn-active' : ''); }
-    if (ruBtn) { ruBtn.className = 'btn btn-outline-secondary btn-sm' + (currentLang==='ru' ? ' lang-btn-active' : ''); }
+    const englishBtn = document.getElementById('langBtnEn');
+    const russianBtn = document.getElementById('langBtnRu');
+    if (englishBtn) englishBtn.className = 'btn btn-outline-secondary btn-sm' + (currentLang === 'en' ? ' lang-btn-active' : '');
+    if (russianBtn) russianBtn.className = 'btn btn-outline-secondary btn-sm' + (currentLang === 'ru' ? ' lang-btn-active' : '');
 }
 
 // ════════════════════════════════════════════════════════════════════
@@ -690,15 +696,15 @@ function buildAddWidgetModal() {
 // Log filter — URL-driven state (no page reload)
 // ════════════════════════════════════════════════════════════════════
 function readFilterFromUrl() {
-    const p = new URLSearchParams(window.location.search);
+    const urlParams = new URLSearchParams(window.location.search);
     logFilter = {
-        level:   p.get('level')   || '',
-        service: p.get('service') || '',
-        from:    p.get('from')    || '',
-        to:      p.get('to')      || '',
-        q:       p.get('q')       || '',
-        page:    parseInt(p.get('page') || '0'),
-        size:    parseInt(p.get('size') || '20'),
+        level:   urlParams.get('level')   || '',
+        service: urlParams.get('service') || '',
+        from:    urlParams.get('from')    || '',
+        to:      urlParams.get('to')      || '',
+        q:       urlParams.get('q')       || '',
+        page:    parseInt(urlParams.get('page') || '0'),
+        size:    parseInt(urlParams.get('size') || '20'),
     };
 }
 
@@ -761,9 +767,9 @@ function jumpToPage() {
 }
 
 function pushFilterUrl() {
-    const p = new URLSearchParams();
-    Object.entries(logFilter).forEach(([k, v]) => { if (v !== '' && v !== 0 && v !== 20) p.set(k, v); });
-    history.replaceState({}, '', p.toString() ? '?' + p : '/');
+    const urlParams = new URLSearchParams();
+    Object.entries(logFilter).forEach(([key, value]) => { if (value !== '' && value !== 0 && value !== 20) urlParams.set(key, value); });
+    history.replaceState({}, '', urlParams.toString() ? '?' + urlParams : '/');
 }
 
 function updateClearBtn() {
@@ -775,15 +781,14 @@ function updateClearBtn() {
 // Fetch & render log table
 // ════════════════════════════════════════════════════════════════════
 async function fetchAndRenderLog() {
-    const p = new URLSearchParams();
-    Object.entries(logFilter).forEach(([k, v]) => { if (v !== '' && v !== null) p.set(k, v); });
-    // If page has a serviceName and no explicit service filter is set, auto-apply it
+    const queryParams = new URLSearchParams();
+    Object.entries(logFilter).forEach(([key, value]) => { if (value !== '' && value !== null) queryParams.set(key, value); });
     if (currentPage?.serviceName && !logFilter.service) {
-        p.set('service', currentPage.serviceName);
+        queryParams.set('service', currentPage.serviceName);
     }
-    const data = await fetch('/api/logs?' + p).then(r => r.json())
-        .catch(() => ({ content:[], totalElements:0, totalPages:1, number:0, first:true, last:true }));
-    renderLog(data);
+    const logPage = await fetch('/api/logs?' + queryParams).then(r => r.json())
+        .catch(() => ({ content: [], totalElements: 0, totalPages: 1, number: 0, first: true, last: true }));
+    renderLog(logPage);
 }
 
 function renderLog(page) {
@@ -824,53 +829,50 @@ function renderLog(page) {
     renderPagination(cur, page.totalPages, page.first, page.last);
 }
 
-function renderPagination(cur, total, first, last) {
-    const el = document.getElementById('logPagination');
-    if (total <= 1) { el.innerHTML = ''; return; }
+function renderPagination(currentPageIndex, totalPages, isFirstPage, isLastPage) {
+    const paginationEl = document.getElementById('logPagination');
+    if (totalPages <= 1) { paginationEl.innerHTML = ''; return; }
 
-    const btn = (page, label, disabled, active = false) =>
-        `<li class="page-item ${disabled?'disabled':''} ${active?'active':''}">
-           <button class="page-link" ${disabled?'disabled':''} onclick="setPage(${page})">${label}</button>
+    const pageBtn = (targetPage, label, disabled, active = false) =>
+        `<li class="page-item ${disabled ? 'disabled' : ''} ${active ? 'active' : ''}">
+           <button class="page-link" ${disabled ? 'disabled' : ''} onclick="setPage(${targetPage})">${label}</button>
          </li>`;
 
-    const winStart = Math.max(0, cur - 3);
-    const winEnd   = Math.min(total - 1, cur + 3);
-    let h = '<ul class="pagination pagination-sm mb-0">';
+    const windowStart = Math.max(0, currentPageIndex - 3);
+    const windowEnd   = Math.min(totalPages - 1, currentPageIndex + 3);
+    let paginationHtml = '<ul class="pagination pagination-sm mb-0">';
 
-    // Prev
-    h += btn(cur - 1, '<i class="bi bi-chevron-left"></i>', first);
+    paginationHtml += pageBtn(currentPageIndex - 1, '<i class="bi bi-chevron-left"></i>', isFirstPage);
 
-    // First page + ellipsis
-    if (winStart > 0) {
-        h += btn(0, '1');
-        if (winStart > 1) h += `<li class="page-item disabled"><span class="page-link">&hellip;</span></li>`;
+    if (windowStart > 0) {
+        paginationHtml += pageBtn(0, '1');
+        if (windowStart > 1) paginationHtml += `<li class="page-item disabled"><span class="page-link">&hellip;</span></li>`;
     }
 
-    // Window of pages
-    for (let i = winStart; i <= winEnd; i++) h += btn(i, i + 1, false, i === cur);
-
-    // Ellipsis + last page
-    if (winEnd < total - 1) {
-        if (winEnd < total - 2) h += `<li class="page-item disabled"><span class="page-link">&hellip;</span></li>`;
-        h += btn(total - 1, total);
+    for (let pageIndex = windowStart; pageIndex <= windowEnd; pageIndex++) {
+        paginationHtml += pageBtn(pageIndex, pageIndex + 1, false, pageIndex === currentPageIndex);
     }
 
-    // Next
-    h += btn(cur + 1, '<i class="bi bi-chevron-right"></i>', last);
-    h += '</ul>';
-    el.innerHTML = h;
+    if (windowEnd < totalPages - 1) {
+        if (windowEnd < totalPages - 2) paginationHtml += `<li class="page-item disabled"><span class="page-link">&hellip;</span></li>`;
+        paginationHtml += pageBtn(totalPages - 1, totalPages);
+    }
+
+    paginationHtml += pageBtn(currentPageIndex + 1, '<i class="bi bi-chevron-right"></i>', isLastPage);
+    paginationHtml += '</ul>';
+    paginationEl.innerHTML = paginationHtml;
 }
 
 // ════════════════════════════════════════════════════════════════════
 // Widget dashboard load
 // ════════════════════════════════════════════════════════════════════
 async function loadDashboard() {
-    const svcParam = currentPage?.serviceName ? `?service=${encodeURIComponent(currentPage.serviceName)}` : '';
-    const pageParam = currentPage ? `?pageId=${currentPage.id}` : '';
+    const serviceQueryParam = currentPage?.serviceName ? `?service=${encodeURIComponent(currentPage.serviceName)}` : '';
+    const pageQueryParam    = currentPage ? `?pageId=${currentPage.id}` : '';
     const [metrics, widgets] = await Promise.all([
-        fetch('/api/metrics/summary' + svcParam).then(r => r.json()),
-        fetch('/api/widgets' + pageParam).then(r => r.json()),
-    ]).catch(e => { console.error(e); return [{}, []]; });
+        fetch('/api/metrics/summary' + serviceQueryParam).then(r => r.json()),
+        fetch('/api/widgets' + pageQueryParam).then(r => r.json()),
+    ]).catch(error => { console.error(error); return [{}, []]; });
     metricsCache = metrics;
     renderAllWidgets(widgets, metrics);
 }
@@ -892,10 +894,10 @@ function renderAllWidgets(widgets, metrics) {
 // Widget shell
 // ════════════════════════════════════════════════════════════════════
 function buildWidgetShell(widget) {
-    const col = document.createElement('div');
-    col.className = `${colClass(widget)} widget-col`;
-    col.dataset.widgetId = widget.id;
-    col.innerHTML = `
+    const columnDiv = document.createElement('div');
+    columnDiv.className = `${colClass(widget)} widget-col`;
+    columnDiv.dataset.widgetId = widget.id;
+    columnDiv.innerHTML = `
         <div class="card p-3 h-100 position-relative">
             <div class="drag-handle" title="Drag to reorder"><i class="bi bi-grip-vertical"></i></div>
             <button class="btn-remove-widget" onclick="removeWidget(${widget.id})" title="Remove"><i class="bi bi-x-lg"></i></button>
@@ -904,92 +906,121 @@ function buildWidgetShell(widget) {
             </div>
             <div class="widget-ts" id="wts-${widget.id}"></div>
         </div>`;
-    return col;
+    return columnDiv;
 }
 
 // ════════════════════════════════════════════════════════════════════
 // Per-type renderers
 // ════════════════════════════════════════════════════════════════════
 function renderWidgetContent(widget, metrics) {
-    const el = document.getElementById(`wc-${widget.id}`);
-    if (!el) return;
+    const contentEl = document.getElementById(`wc-${widget.id}`);
+    if (!contentEl) return;
     switch (widget.type) {
-        case 'STAT_TOTAL':      stat(el,widget,fmt(metrics.totalLogs??0),'bi-layers','si-primary','All time'); break;
-        case 'STAT_ERRORS':     stat(el,widget,fmt(metrics.countByLevel?.ERROR??0),'bi-x-circle','si-danger','24 h'); break;
-        case 'STAT_WARNS':      stat(el,widget,fmt(metrics.countByLevel?.WARN??0),'bi-exclamation-triangle','si-warning','24 h'); break;
-        case 'STAT_ERROR_RATE': stat(el,widget,(metrics.errorRate??0).toFixed(1)+'%','bi-graph-up-arrow','si-info','Last hour'); break;
-        case 'STAT_INFOS':      stat(el,widget,fmt(metrics.countByLevel?.INFO??0),'bi-info-circle','si-primary','24 h'); break;
-        case 'STAT_LAST_HOUR':  stat(el,widget,fmt(metrics.logsLastHour??0),'bi-clock-history','si-success','Last hour'); break;
-        case 'STAT_SERVICES':   stat(el,widget,fmt(metrics.servicesCount??0),'bi-hdd-network','si-purple','Active'); break;
-        case 'CHART_LEVEL':     chartDoughnut(el,widget,metrics.countByLevel??{}); break;
-        case 'CHART_LEVEL_BAR': chartLevelBar(el,widget,metrics.countByLevel??{}); break;
-        case 'CHART_TIMELINE':  chartTimeline(el,widget,metrics.timeSeriesData??[]); break;
-        case 'CHART_SERVICES':  chartServices(el,widget,metrics.topServices??[]); break;
-        case 'TABLE_RECENT': case 'TABLE_ERRORS': tableLog(el,widget,TABLE_URL[widget.type]); break;
-        case 'GAUGE_CPU':  renderGaugeWidget(el,widget,systemMetrics?.cpuUsagePercent??0, `${systemMetrics?.cpuCores??0} cores`,'CPU'); break;
-        case 'GAUGE_RAM':  renderGaugeWidget(el,widget,systemMetrics?.ramUsagePercent??0, `${systemMetrics?.ramUsed??''}  / ${systemMetrics?.ramTotal??''}`,'RAM'); break;
-        case 'GAUGE_DISK': renderGaugeWidget(el,widget,systemMetrics?.diskUsagePercent??0,`${systemMetrics?.diskUsed??''} / ${systemMetrics?.diskTotal??''}`,'Disk'); break;
-        default: el.innerHTML = `<span class="text-muted small">Unknown: ${widget.type}</span>`;
+        case 'STAT_TOTAL':      stat(contentEl, widget, fmt(metrics.totalLogs ?? 0), 'bi-layers', 'si-primary', 'All time'); break;
+        case 'STAT_ERRORS':     stat(contentEl, widget, fmt(metrics.countByLevel?.ERROR ?? 0), 'bi-x-circle', 'si-danger', '24 h'); break;
+        case 'STAT_WARNS':      stat(contentEl, widget, fmt(metrics.countByLevel?.WARN ?? 0), 'bi-exclamation-triangle', 'si-warning', '24 h'); break;
+        case 'STAT_ERROR_RATE': stat(contentEl, widget, (metrics.errorRate ?? 0).toFixed(1) + '%', 'bi-graph-up-arrow', 'si-info', 'Last hour'); break;
+        case 'STAT_INFOS':      stat(contentEl, widget, fmt(metrics.countByLevel?.INFO ?? 0), 'bi-info-circle', 'si-primary', '24 h'); break;
+        case 'STAT_LAST_HOUR':  stat(contentEl, widget, fmt(metrics.logsLastHour ?? 0), 'bi-clock-history', 'si-success', 'Last hour'); break;
+        case 'STAT_SERVICES':   stat(contentEl, widget, fmt(metrics.servicesCount ?? 0), 'bi-hdd-network', 'si-purple', 'Active'); break;
+        case 'CHART_LEVEL':     chartDoughnut(contentEl, widget, metrics.countByLevel ?? {}); break;
+        case 'CHART_LEVEL_BAR': chartLevelBar(contentEl, widget, metrics.countByLevel ?? {}); break;
+        case 'CHART_TIMELINE':  chartTimeline(contentEl, widget, metrics.timeSeriesData ?? []); break;
+        case 'CHART_SERVICES':  chartServices(contentEl, widget, metrics.topServices ?? []); break;
+        case 'TABLE_RECENT': case 'TABLE_ERRORS': tableLog(contentEl, widget, TABLE_URL[widget.type]); break;
+        case 'GAUGE_CPU':  renderGaugeWidget(contentEl, widget, systemMetrics?.cpuUsagePercent ?? 0, `${systemMetrics?.cpuCores ?? 0} cores`); break;
+        case 'GAUGE_RAM':  renderGaugeWidget(contentEl, widget, systemMetrics?.ramUsagePercent ?? 0, `${systemMetrics?.ramUsed ?? ''} / ${systemMetrics?.ramTotal ?? ''}`); break;
+        case 'GAUGE_DISK': renderGaugeWidget(contentEl, widget, systemMetrics?.diskUsagePercent ?? 0, `${systemMetrics?.diskUsed ?? ''} / ${systemMetrics?.diskTotal ?? ''}`); break;
+        default: contentEl.innerHTML = `<span class="text-muted small">Unknown: ${widget.type}</span>`;
     }
     markUpdated(widget.id);
 }
 
-function stat(el, widget, value, icon, iconCls, sub) {
-    el.innerHTML = `
+function stat(contentEl, widget, value, iconClass, iconColorClass, subLabel) {
+    contentEl.innerHTML = `
         <div class="d-flex align-items-start justify-content-between gap-2">
             <div class="overflow-hidden flex-grow-1">
                 <div class="stat-label">${widget.title}</div>
                 <div class="stat-value" id="stat-val-${widget.id}">${value}</div>
-                <div class="stat-sub">${sub}</div>
+                <div class="stat-sub">${subLabel}</div>
             </div>
-            <div class="stat-icon-wrap ${iconCls} mt-1"><i class="bi ${icon}"></i></div>
+            <div class="stat-icon-wrap ${iconColorClass} mt-1"><i class="bi ${iconClass}"></i></div>
         </div>`;
 }
 
-function chartDoughnut(el, widget, byLevel) {
-    el.innerHTML = `<div class="widget-title"><i class="bi bi-pie-chart me-1"></i>${widget.title}</div><div class="chart-wrap"><canvas id="cv-${widget.id}"></canvas></div>`;
-    const labels=Object.keys(byLevel),values=Object.values(byLevel),c=chartColors();
+function chartDoughnut(contentEl, widget, byLevel) {
+    contentEl.innerHTML = `<div class="widget-title"><i class="bi bi-pie-chart me-1"></i>${widget.title}</div><div class="chart-wrap"><canvas id="cv-${widget.id}"></canvas></div>`;
+    const levelLabels  = Object.keys(byLevel);
+    const levelValues  = Object.values(byLevel);
+    const colors       = chartColors();
     chartInstances.set(widget.id, new Chart(document.getElementById(`cv-${widget.id}`), {
-        type:'doughnut', data:{labels,datasets:[{data:values,backgroundColor:labels.map(l=>LEVEL_COLORS[l]??'#6c757d'),borderColor:c.border,borderWidth:3,hoverOffset:6}]},
-        options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:c.legend,padding:10,font:{size:11}}}}}
+        type: 'doughnut',
+        data: {
+            labels: levelLabels,
+            datasets: [{ data: levelValues, backgroundColor: levelLabels.map(label => LEVEL_COLORS[label] ?? '#6c757d'), borderColor: colors.border, borderWidth: 3, hoverOffset: 6 }],
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: colors.legend, padding: 10, font: { size: 11 } } } } },
     }));
 }
 
-function chartLevelBar(el, widget, byLevel) {
-    el.innerHTML = `<div class="widget-title"><i class="bi bi-bar-chart-steps me-1"></i>${widget.title}</div><div class="chart-wrap"><canvas id="cv-${widget.id}"></canvas></div>`;
-    const labels=Object.keys(byLevel),values=Object.values(byLevel),c=chartColors();
+function chartLevelBar(contentEl, widget, byLevel) {
+    contentEl.innerHTML = `<div class="widget-title"><i class="bi bi-bar-chart-steps me-1"></i>${widget.title}</div><div class="chart-wrap"><canvas id="cv-${widget.id}"></canvas></div>`;
+    const levelLabels = Object.keys(byLevel);
+    const levelValues = Object.values(byLevel);
+    const colors      = chartColors();
     chartInstances.set(widget.id, new Chart(document.getElementById(`cv-${widget.id}`), {
-        type:'bar', data:{labels,datasets:[{data:values,backgroundColor:labels.map(l=>LEVEL_COLORS[l]??'#6c757d'),borderRadius:5,borderSkipped:false}]},
-        options:{responsive:true,maintainAspectRatio:false,scales:{x:{ticks:{color:c.tick},grid:{color:c.grid}},y:{beginAtZero:true,ticks:{precision:0,color:c.tick},grid:{color:c.grid}}},plugins:{legend:{display:false}}}
+        type: 'bar',
+        data: {
+            labels: levelLabels,
+            datasets: [{ data: levelValues, backgroundColor: levelLabels.map(label => LEVEL_COLORS[label] ?? '#6c757d'), borderRadius: 5, borderSkipped: false }],
+        },
+        options: { responsive: true, maintainAspectRatio: false, scales: { x: { ticks: { color: colors.tick }, grid: { color: colors.grid } }, y: { beginAtZero: true, ticks: { precision: 0, color: colors.tick }, grid: { color: colors.grid } } }, plugins: { legend: { display: false } } },
     }));
 }
 
-function chartTimeline(el, widget, ts) {
-    el.innerHTML = `<div class="widget-title"><i class="bi bi-bar-chart-line me-1"></i>${widget.title}</div><div class="chart-wrap"><canvas id="cv-${widget.id}"></canvas></div>`;
-    const c=chartColors();
+function chartTimeline(contentEl, widget, timeSeries) {
+    contentEl.innerHTML = `<div class="widget-title"><i class="bi bi-bar-chart-line me-1"></i>${widget.title}</div><div class="chart-wrap"><canvas id="cv-${widget.id}"></canvas></div>`;
+    const colors = chartColors();
     chartInstances.set(widget.id, new Chart(document.getElementById(`cv-${widget.id}`), {
-        type:'line', data:{labels:ts.map(p=>p.label),datasets:[{label:'Logs',data:ts.map(p=>p.count),borderColor:c.line,backgroundColor:c.lineFill,fill:true,tension:.35,pointRadius:3,pointHoverRadius:5}]},
-        options:{responsive:true,maintainAspectRatio:false,scales:{x:{ticks:{maxTicksLimit:12,font:{size:10},color:c.tick},grid:{color:c.grid}},y:{beginAtZero:true,ticks:{precision:0,font:{size:10},color:c.tick},grid:{color:c.grid}}},plugins:{legend:{display:false}}}
+        type: 'line',
+        data: {
+            labels: timeSeries.map(point => point.label),
+            datasets: [{ label: 'Logs', data: timeSeries.map(point => point.count), borderColor: colors.line, backgroundColor: colors.lineFill, fill: true, tension: .35, pointRadius: 3, pointHoverRadius: 5 }],
+        },
+        options: { responsive: true, maintainAspectRatio: false, scales: { x: { ticks: { maxTicksLimit: 12, font: { size: 10 }, color: colors.tick }, grid: { color: colors.grid } }, y: { beginAtZero: true, ticks: { precision: 0, font: { size: 10 }, color: colors.tick }, grid: { color: colors.grid } } }, plugins: { legend: { display: false } } },
     }));
 }
 
-function chartServices(el, widget, svcs) {
-    el.innerHTML = `<div class="widget-title"><i class="bi bi-diagram-3 me-1"></i>${widget.title}</div><div class="chart-wrap"><canvas id="cv-${widget.id}"></canvas></div>`;
-    const c=chartColors();
+function chartServices(contentEl, widget, topServices) {
+    contentEl.innerHTML = `<div class="widget-title"><i class="bi bi-diagram-3 me-1"></i>${widget.title}</div><div class="chart-wrap"><canvas id="cv-${widget.id}"></canvas></div>`;
+    const colors = chartColors();
     chartInstances.set(widget.id, new Chart(document.getElementById(`cv-${widget.id}`), {
-        type:'bar', data:{labels:svcs.map(s=>s.serviceName),datasets:[{data:svcs.map(s=>s.count),backgroundColor:'rgba(88,166,255,.65)',borderColor:'#58a6ff',borderWidth:1,borderRadius:4}]},
-        options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',scales:{x:{beginAtZero:true,ticks:{precision:0,color:c.tick},grid:{color:c.grid}},y:{ticks:{color:c.tick,font:{size:10}},grid:{display:false}}},plugins:{legend:{display:false}}}
+        type: 'bar',
+        data: {
+            labels: topServices.map(service => service.serviceName),
+            datasets: [{ data: topServices.map(service => service.count), backgroundColor: 'rgba(88,166,255,.65)', borderColor: '#58a6ff', borderWidth: 1, borderRadius: 4 }],
+        },
+        options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', scales: { x: { beginAtZero: true, ticks: { precision: 0, color: colors.tick }, grid: { color: colors.grid } }, y: { ticks: { color: colors.tick, font: { size: 10 } }, grid: { display: false } } }, plugins: { legend: { display: false } } },
     }));
 }
 
-async function tableLog(el, widget, url) {
-    el.innerHTML = `<div class="widget-title"><i class="bi bi-table me-1"></i>${widget.title}</div><div class="text-center py-3"><div class="spinner-border spinner-border-sm text-muted"></div></div>`;
-    const data = await fetch(url).then(r=>r.json()).catch(()=>({content:[]}));
-    const logs = data.content??[];
-    const rows = !logs.length
+async function tableLog(contentEl, widget, url) {
+    contentEl.innerHTML = `<div class="widget-title"><i class="bi bi-table me-1"></i>${widget.title}</div><div class="text-center py-3"><div class="spinner-border spinner-border-sm text-muted"></div></div>`;
+    const responseData = await fetch(url).then(r => r.json()).catch(() => ({ content: [] }));
+    const logEntries   = responseData.content ?? [];
+    const tableRows    = !logEntries.length
         ? `<tr><td colspan="4" class="text-center text-muted py-4"><i class="bi bi-inbox"></i> ${t('log.empty')}</td></tr>`
-        : logs.map(log=>`<tr><td class="font-monospace small text-nowrap">${log.formattedTimestamp??''}</td><td><span class="badge ${BADGE_CLASS[log.level]??'badge-DEBUG'}">${log.level??''}</span></td><td class="small">${esc(log.serviceName??'')}</td><td class="small msg-cell" title="${esc(log.message??'')}">${esc(log.message??'')}</td></tr>`).join('');
-    el.innerHTML = `<div class="widget-title"><i class="bi bi-table me-1"></i>${widget.title}</div><div class="table-responsive"><table class="table table-sm mb-0"><thead><tr><th>${t('log.colTimestamp')}</th><th>${t('log.colLevel')}</th><th>${t('log.colService')}</th><th>${t('log.colMessage')}</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+        : logEntries.map(logEntry => `<tr>
+            <td class="font-monospace small text-nowrap">${logEntry.formattedTimestamp ?? ''}</td>
+            <td><span class="badge ${BADGE_CLASS[logEntry.level] ?? 'badge-DEBUG'}">${logEntry.level ?? ''}</span></td>
+            <td class="small">${esc(logEntry.serviceName ?? '')}</td>
+            <td class="small msg-cell" title="${esc(logEntry.message ?? '')}">${esc(logEntry.message ?? '')}</td>
+        </tr>`).join('');
+    contentEl.innerHTML = `<div class="widget-title"><i class="bi bi-table me-1"></i>${widget.title}</div>
+        <div class="table-responsive"><table class="table table-sm mb-0">
+            <thead><tr><th>${t('log.colTimestamp')}</th><th>${t('log.colLevel')}</th><th>${t('log.colService')}</th><th>${t('log.colMessage')}</th></tr></thead>
+            <tbody>${tableRows}</tbody>
+        </table></div>`;
 }
 
 function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
@@ -1002,60 +1033,60 @@ async function fetchSystemMetrics() {
     systemMetrics = await fetch('/api/system/metrics').then(r=>r.json()).catch(()=>null);
 }
 
-function gaugeColor(pct) {
-    if (pct < 50) return '#3fb950';
-    if (pct < 80) return '#d29922';
+function gaugeColor(percentage) {
+    if (percentage < 50) return '#3fb950';
+    if (percentage < 80) return '#d29922';
     return '#f85149';
 }
 
-function renderGaugeWidget(el, widget, pct, detail) {
-    const p = Math.min(100, Math.max(0, pct));
-    const color = gaugeColor(p);
-    const bg = isDark() ? '#21262d' : '#e8ecef';
-    el.innerHTML = `
+function renderGaugeWidget(contentEl, widget, percentage, detailText) {
+    const clampedPct = Math.min(100, Math.max(0, percentage));
+    const fillColor  = gaugeColor(clampedPct);
+    const trackColor = isDark() ? '#21262d' : '#e8ecef';
+    contentEl.innerHTML = `
         <div class="widget-title">${widget.title}</div>
         <div class="gauge-wrap">
             <canvas id="cv-${widget.id}"></canvas>
             <div class="gauge-overlay">
-                <div id="gval-${widget.id}" style="font-size:1.75rem;font-weight:700;color:${color};line-height:1;">${p.toFixed(1)}%</div>
-                <div id="gdet-${widget.id}" style="font-size:.67rem;color:var(--text-muted);margin-top:3px;">${detail}</div>
+                <div id="gval-${widget.id}" style="font-size:1.75rem;font-weight:700;color:${fillColor};line-height:1;">${clampedPct.toFixed(1)}%</div>
+                <div id="gdet-${widget.id}" style="font-size:.67rem;color:var(--text-muted);margin-top:3px;">${detailText}</div>
             </div>
         </div>`;
     const chart = new Chart(document.getElementById(`cv-${widget.id}`), {
         type: 'doughnut',
-        data: { datasets: [{ data:[p, 100-p], backgroundColor:[color, bg], borderWidth:0 }] },
+        data: { datasets: [{ data: [clampedPct, 100 - clampedPct], backgroundColor: [fillColor, trackColor], borderWidth: 0 }] },
         options: {
             circumference: 210, rotation: -105,
             responsive: true, maintainAspectRatio: false,
-            plugins: { legend:{display:false}, tooltip:{enabled:false} },
-            cutout: '78%', animation: { animateRotate:true, duration:900 }
-        }
+            plugins: { legend: { display: false }, tooltip: { enabled: false } },
+            cutout: '78%', animation: { animateRotate: true, duration: 900 },
+        },
     });
     chartInstances.set(widget.id, chart);
 }
 
-function updateGaugeInPlace(widget, sysM) {
-    if (!sysM) return;
-    let pct, detail;
-    switch(widget.type) {
-        case 'GAUGE_CPU':  pct=sysM.cpuUsagePercent; detail=`${sysM.cpuCores} cores`; break;
-        case 'GAUGE_RAM':  pct=sysM.ramUsagePercent; detail=`${sysM.ramUsed} / ${sysM.ramTotal}`; break;
-        case 'GAUGE_DISK': pct=sysM.diskUsagePercent; detail=`${sysM.diskUsed} / ${sysM.diskTotal}`; break;
+function updateGaugeInPlace(widget, sysMetrics) {
+    if (!sysMetrics) return;
+    let percentage, detailText;
+    switch (widget.type) {
+        case 'GAUGE_CPU':  percentage = sysMetrics.cpuUsagePercent;  detailText = `${sysMetrics.cpuCores} cores`; break;
+        case 'GAUGE_RAM':  percentage = sysMetrics.ramUsagePercent;  detailText = `${sysMetrics.ramUsed} / ${sysMetrics.ramTotal}`; break;
+        case 'GAUGE_DISK': percentage = sysMetrics.diskUsagePercent; detailText = `${sysMetrics.diskUsed} / ${sysMetrics.diskTotal}`; break;
         default: return;
     }
-    pct = Math.min(100, Math.max(0, pct));
-    const color = gaugeColor(pct);
-    const bg    = isDark() ? '#21262d' : '#e8ecef';
+    percentage = Math.min(100, Math.max(0, percentage));
+    const fillColor  = gaugeColor(percentage);
+    const trackColor = isDark() ? '#21262d' : '#e8ecef';
     const chart = chartInstances.get(widget.id);
     if (chart) {
-        chart.data.datasets[0].data = [pct, 100 - pct];
-        chart.data.datasets[0].backgroundColor = [color, bg];
+        chart.data.datasets[0].data = [percentage, 100 - percentage];
+        chart.data.datasets[0].backgroundColor = [fillColor, trackColor];
         chart.update('active');
     }
-    const valEl = document.getElementById(`gval-${widget.id}`);
-    if (valEl) { valEl.textContent = pct.toFixed(1) + '%'; valEl.style.color = color; }
-    const detEl = document.getElementById(`gdet-${widget.id}`);
-    if (detEl) detEl.textContent = detail;
+    const valueEl = document.getElementById(`gval-${widget.id}`);
+    if (valueEl) { valueEl.textContent = percentage.toFixed(1) + '%'; valueEl.style.color = fillColor; }
+    const detailEl = document.getElementById(`gdet-${widget.id}`);
+    if (detailEl) detailEl.textContent = detailText;
     markUpdated(widget.id);
 }
 
@@ -1072,9 +1103,13 @@ function initSortable() {
     });
 }
 async function saveWidgetOrder() {
-    const ids = [...document.querySelectorAll('#widget-grid [data-widget-id]')].map(el=>Number(el.dataset.widgetId));
+    const widgetIds = [...document.querySelectorAll('#widget-grid [data-widget-id]')].map(el => Number(el.dataset.widgetId));
     const pageParam = currentPage ? `?pageId=${currentPage.id}` : '';
-    await fetch('/api/widgets/order' + pageParam,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(ids)}).catch(console.warn);
+    await fetch('/api/widgets/order' + pageParam, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(widgetIds),
+    }).catch(console.warn);
 }
 
 // ════════════════════════════════════════════════════════════════════
@@ -1092,86 +1127,116 @@ function metricsUrl() {
 async function periodicStatRefresh() {
     if (streamActive) return; // stream handles its own refresh
     try {
-        const [m, sysM] = await Promise.all([
-            fetch(metricsUrl()).then(r=>r.json()),
-            fetch('/api/system/metrics').then(r=>r.json()),
+        const [freshMetrics, freshSystemMetrics] = await Promise.all([
+            fetch(metricsUrl()).then(r => r.json()),
+            fetch('/api/system/metrics').then(r => r.json()),
         ]);
-        metricsCache   = m;
-        systemMetrics  = sysM;
-        widgetRegistry.forEach((w) => {
-            if (STAT_TYPES.has(w.type))  updateStatInPlace(w, m);
-            if (GAUGE_TYPES.has(w.type)) updateGaugeInPlace(w, sysM);
+        metricsCache  = freshMetrics;
+        systemMetrics = freshSystemMetrics;
+        widgetRegistry.forEach(widget => {
+            if (STAT_TYPES.has(widget.type))  updateStatInPlace(widget, freshMetrics);
+            if (GAUGE_TYPES.has(widget.type)) updateGaugeInPlace(widget, freshSystemMetrics);
         });
         document.getElementById('globalRefreshTs').textContent = t('nav.updated') + ' ' + timeStr();
-        } catch(e) {}
+    } catch (ignored) {}
 }
 
 async function periodicFullRefresh() {
     if (streamActive) return;
     if (!metricsCache) return;
-    widgetRegistry.forEach((w,id) => {
-        if (CHART_TYPES.has(w.type)) { updateChartInPlace(w,metricsCache); markUpdated(id); }
-        if (TABLE_TYPES.has(w.type)) { const el=document.getElementById(`wc-${id}`); if(el) tableLog(el,w,TABLE_URL[w.type]).then(()=>markUpdated(id)); }
+    widgetRegistry.forEach((widget, widgetId) => {
+        if (CHART_TYPES.has(widget.type)) {
+            updateChartInPlace(widget, metricsCache);
+            markUpdated(widgetId);
+        }
+        if (TABLE_TYPES.has(widget.type)) {
+            const contentEl = document.getElementById(`wc-${widgetId}`);
+            if (contentEl) tableLog(contentEl, widget, TABLE_URL[widget.type]).then(() => markUpdated(widgetId));
+        }
     });
-    // Refresh main log table (keeps current page/filter)
     fetchAndRenderLog();
 }
 
 // ── In-place stat update ──────────────────────────────────────────────
-function updateStatInPlace(widget, m) {
-    const span = document.getElementById(`stat-val-${widget.id}`);
-    if (!span) return;
-    let v;
-    switch(widget.type) {
-        case 'STAT_TOTAL':      v=fmt(m.totalLogs??0); break;
-        case 'STAT_ERRORS':     v=fmt(m.countByLevel?.ERROR??0); break;
-        case 'STAT_WARNS':      v=fmt(m.countByLevel?.WARN??0); break;
-        case 'STAT_ERROR_RATE': v=(m.errorRate??0).toFixed(1)+'%'; break;
-        case 'STAT_INFOS':      v=fmt(m.countByLevel?.INFO??0); break;
-        case 'STAT_LAST_HOUR':  v=fmt(m.logsLastHour??0); break;
-        case 'STAT_SERVICES':   v=fmt(m.servicesCount??0); break;
+function updateStatInPlace(widget, metrics) {
+    const valueSpan = document.getElementById(`stat-val-${widget.id}`);
+    if (!valueSpan) return;
+    let newValue;
+    switch (widget.type) {
+        case 'STAT_TOTAL':      newValue = fmt(metrics.totalLogs ?? 0); break;
+        case 'STAT_ERRORS':     newValue = fmt(metrics.countByLevel?.ERROR ?? 0); break;
+        case 'STAT_WARNS':      newValue = fmt(metrics.countByLevel?.WARN ?? 0); break;
+        case 'STAT_ERROR_RATE': newValue = (metrics.errorRate ?? 0).toFixed(1) + '%'; break;
+        case 'STAT_INFOS':      newValue = fmt(metrics.countByLevel?.INFO ?? 0); break;
+        case 'STAT_LAST_HOUR':  newValue = fmt(metrics.logsLastHour ?? 0); break;
+        case 'STAT_SERVICES':   newValue = fmt(metrics.servicesCount ?? 0); break;
         default: return;
     }
-    if (span.textContent !== v) {
-        span.textContent = v;
-        span.classList.remove('val-flash');
-        void span.offsetWidth;
-        span.classList.add('val-flash');
+    if (valueSpan.textContent !== newValue) {
+        valueSpan.textContent = newValue;
+        valueSpan.classList.remove('val-flash');
+        void valueSpan.offsetWidth;
+        valueSpan.classList.add('val-flash');
         markUpdated(widget.id);
     }
 }
 
 // ── In-place chart update ─────────────────────────────────────────────
-function updateChartInPlace(widget, m) {
+function updateChartInPlace(widget, metrics) {
     const chart = chartInstances.get(widget.id);
     if (!chart) return;
-    const ds = chart.data.datasets[0];
-    switch(widget.type) {
-        case 'CHART_LEVEL': case 'CHART_LEVEL_BAR': {
-            const cl=m.countByLevel??{}; chart.data.labels=Object.keys(cl); ds.data=Object.values(cl); break; }
+    const dataset = chart.data.datasets[0];
+    switch (widget.type) {
+        case 'CHART_LEVEL':
+        case 'CHART_LEVEL_BAR': {
+            const countByLevel = metrics.countByLevel ?? {};
+            chart.data.labels = Object.keys(countByLevel);
+            dataset.data = Object.values(countByLevel);
+            break;
+        }
         case 'CHART_TIMELINE': {
-            const ts=m.timeSeriesData??[]; chart.data.labels=ts.map(p=>p.label); ds.data=ts.map(p=>p.count); break; }
+            const timeSeries = metrics.timeSeriesData ?? [];
+            chart.data.labels = timeSeries.map(point => point.label);
+            dataset.data = timeSeries.map(point => point.count);
+            break;
+        }
         case 'CHART_SERVICES': {
-            const sv=m.topServices??[]; chart.data.labels=sv.map(s=>s.serviceName); ds.data=sv.map(s=>s.count); break; }
+            const topServices = metrics.topServices ?? [];
+            chart.data.labels = topServices.map(service => service.serviceName);
+            dataset.data = topServices.map(service => service.count);
+            break;
+        }
     }
     chart.update('active');
 }
 
 function applyAllChartThemes() {
-    const c=chartColors();
-    chartInstances.forEach(chart=>{
-        if(chart.options.plugins?.legend?.labels) chart.options.plugins.legend.labels.color=c.legend;
-        if(chart.options.scales) Object.values(chart.options.scales).forEach(ax=>{ if(ax.ticks)ax.ticks.color=c.tick; if(ax.grid)ax.grid.color=c.grid; });
-        const ds=chart.data.datasets[0];
-        if(ds&&chart.config.type==='line'){ds.borderColor=c.line;ds.backgroundColor=c.lineFill;}
-        if(ds&&chart.config.type==='doughnut') ds.borderColor=c.border;
+    const colors = chartColors();
+    chartInstances.forEach(chart => {
+        if (chart.options.plugins?.legend?.labels) {
+            chart.options.plugins.legend.labels.color = colors.legend;
+        }
+        if (chart.options.scales) {
+            Object.values(chart.options.scales).forEach(axis => {
+                if (axis.ticks) axis.ticks.color = colors.tick;
+                if (axis.grid)  axis.grid.color  = colors.grid;
+            });
+        }
+        const dataset = chart.data.datasets[0];
+        if (dataset && chart.config.type === 'line') {
+            dataset.borderColor     = colors.line;
+            dataset.backgroundColor = colors.lineFill;
+        }
+        if (dataset && chart.config.type === 'doughnut') {
+            dataset.borderColor = colors.border;
+        }
         chart.update();
     });
 }
 
-function markUpdated(id) {
-    const el=document.getElementById(`wts-${id}`);
-    if(el) el.textContent=timeStr();
+function markUpdated(widgetId) {
+    const timestampEl = document.getElementById(`wts-${widgetId}`);
+    if (timestampEl) timestampEl.textContent = timeStr();
 }
 function timeStr() { return new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'}); }
 
@@ -1192,34 +1257,34 @@ function startStream() {
 
     const cycle = async () => {
         if (!streamActive) return;
-        const count = Math.floor(Math.random() * 3) + 1;
+        const logsToGenerate = Math.floor(Math.random() * 3) + 1;
         try {
-            await fetch(`/api/demo/generate?count=${count}`, { method:'POST' });
-            streamLogCount += count;
+            await fetch(`/api/demo/generate?count=${logsToGenerate}`, { method: 'POST' });
+            streamLogCount += logsToGenerate;
             document.getElementById('streamCount').textContent = streamLogCount + t('stream.logs');
-        } catch(e) {}
+        } catch (ignored) {}
 
-        // Refresh metrics + stats + gauges
-        const [m, sysM] = await Promise.all([
-            fetch(metricsUrl()).then(r=>r.json()).catch(()=>metricsCache),
-            fetch('/api/system/metrics').then(r=>r.json()).catch(()=>systemMetrics),
+        const [freshMetrics, freshSystemMetrics] = await Promise.all([
+            fetch(metricsUrl()).then(r => r.json()).catch(() => metricsCache),
+            fetch('/api/system/metrics').then(r => r.json()).catch(() => systemMetrics),
         ]);
-        if (m) {
-            metricsCache  = m;
-            systemMetrics = sysM;
-            widgetRegistry.forEach((w) => {
-                if (STAT_TYPES.has(w.type))  updateStatInPlace(w, m);
-                if (GAUGE_TYPES.has(w.type)) updateGaugeInPlace(w, sysM);
+        if (freshMetrics) {
+            metricsCache  = freshMetrics;
+            systemMetrics = freshSystemMetrics;
+            widgetRegistry.forEach(widget => {
+                if (STAT_TYPES.has(widget.type))  updateStatInPlace(widget, freshMetrics);
+                if (GAUGE_TYPES.has(widget.type)) updateGaugeInPlace(widget, freshSystemMetrics);
             });
             document.getElementById('globalRefreshTs').textContent = t('nav.updated') + ' ' + timeStr();
         }
 
-        // Refresh widget tables
-        widgetRegistry.forEach((w,id) => {
-            if(TABLE_TYPES.has(w.type)) { const el=document.getElementById(`wc-${id}`); if(el) tableLog(el,w,TABLE_URL[w.type]).then(()=>markUpdated(id)); }
+        widgetRegistry.forEach((widget, widgetId) => {
+            if (TABLE_TYPES.has(widget.type)) {
+                const contentEl = document.getElementById(`wc-${widgetId}`);
+                if (contentEl) tableLog(contentEl, widget, TABLE_URL[widget.type]).then(() => markUpdated(widgetId));
+            }
         });
 
-        // Refresh main log table (stays on current page/filter — new rows appear naturally on page 0)
         fetchAndRenderLog();
 
         if (streamActive) streamTimer = setTimeout(cycle, 1500 + Math.random() * 2000);
@@ -1230,7 +1295,9 @@ function startStream() {
     // Charts update every 8s during stream
     streamChartInt = setInterval(() => {
         if (!metricsCache) return;
-        widgetRegistry.forEach((w,id) => { if(CHART_TYPES.has(w.type)){ updateChartInPlace(w,metricsCache); markUpdated(id); } });
+        widgetRegistry.forEach((widget, widgetId) => {
+            if (CHART_TYPES.has(widget.type)) { updateChartInPlace(widget, metricsCache); markUpdated(widgetId); }
+        });
     }, 8000);
 }
 
@@ -1243,19 +1310,19 @@ function stopStream() {
 }
 
 function updateStreamUI() {
-    const btn   = document.getElementById('streamBtn');
-    const ind   = document.getElementById('streamIndicator');
-    const badge = document.getElementById('logLiveBadge');
+    const streamButton    = document.getElementById('streamBtn');
+    const streamIndicator = document.getElementById('streamIndicator');
+    const liveBadge       = document.getElementById('logLiveBadge');
     if (streamActive) {
-        btn.className = 'btn btn-sm btn-danger';
-        btn.innerHTML = `<i class="bi bi-stop-fill me-1"></i>${t('nav.stopStream')}`;
-        ind.classList.remove('d-none');
-        if(badge) badge.style.display = '';
+        streamButton.className = 'btn btn-sm btn-danger';
+        streamButton.innerHTML = `<i class="bi bi-stop-fill me-1"></i>${t('nav.stopStream')}`;
+        streamIndicator.classList.remove('d-none');
+        if (liveBadge) liveBadge.style.display = '';
     } else {
-        btn.className = 'btn btn-sm btn-outline-success';
-        btn.innerHTML = `<i class="bi bi-broadcast me-1"></i>${t('nav.startStream')}`;
-        ind.classList.add('d-none');
-        if(badge) badge.style.display = 'none';
+        streamButton.className = 'btn btn-sm btn-outline-success';
+        streamButton.innerHTML = `<i class="bi bi-broadcast me-1"></i>${t('nav.startStream')}`;
+        streamIndicator.classList.add('d-none');
+        if (liveBadge) liveBadge.style.display = 'none';
     }
 }
 
@@ -1264,16 +1331,16 @@ function updateStreamUI() {
 // ════════════════════════════════════════════════════════════════════
 async function addWidget(type) {
     const pageParam = currentPage ? `?pageId=${currentPage.id}` : '';
-    const res = await fetch('/api/widgets' + pageParam,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type})});
-    if (!res.ok) return;
-    const widget  = await res.json();
-    const m = metricsCache ?? await fetch('/api/metrics/summary').then(r=>r.json()).catch(()=>({}));
-    metricsCache = m;
+    const response = await fetch('/api/widgets' + pageParam, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type }) });
+    if (!response.ok) return;
+    const widget  = await response.json();
+    const metrics = metricsCache ?? await fetch('/api/metrics/summary').then(r => r.json()).catch(() => ({}));
+    metricsCache = metrics;
     widgetRegistry.set(widget.id, widget);
     document.getElementById('widget-empty').style.display = 'none';
-    const col = buildWidgetShell(widget);
-    document.getElementById('widget-grid').appendChild(col);
-    renderWidgetContent(widget, m);
+    const columnDiv = buildWidgetShell(widget);
+    document.getElementById('widget-grid').appendChild(columnDiv);
+    renderWidgetContent(widget, metrics);
     initSortable();
     bootstrap.Modal.getInstance(document.getElementById('addWidgetModal'))?.hide();
 }
@@ -1380,10 +1447,11 @@ function selectLang(lang) {
 }
 
 function updateLangButtons() {
-    const lang = _pendingLang || currentLang;
-    const enBtn = document.getElementById('langBtnEn'), ruBtn = document.getElementById('langBtnRu');
-    if (enBtn) enBtn.className = 'btn btn-outline-secondary btn-sm' + (lang==='en' ? ' lang-btn-active' : '');
-    if (ruBtn) ruBtn.className = 'btn btn-outline-secondary btn-sm' + (lang==='ru' ? ' lang-btn-active' : '');
+    const activeLang   = _pendingLang || currentLang;
+    const englishBtn   = document.getElementById('langBtnEn');
+    const russianBtn   = document.getElementById('langBtnRu');
+    if (englishBtn) englishBtn.className = 'btn btn-outline-secondary btn-sm' + (activeLang === 'en' ? ' lang-btn-active' : '');
+    if (russianBtn) russianBtn.className = 'btn btn-outline-secondary btn-sm' + (activeLang === 'ru' ? ' lang-btn-active' : '');
 }
 
 async function saveSettings() {
@@ -1459,8 +1527,8 @@ function renderPageTabs(pages) {
             ? `<span class="page-tab-service">${esc(page.serviceName)}</span>` : '';
         tab.innerHTML = `<span>${esc(page.name)}</span>${svcBadge}` +
             `<span class="page-tab-del" title="${t('page.deleteConfirm')}" onclick="deletePage(event,${page.id},${isLast})"><i class="bi bi-x"></i></span>`;
-        tab.addEventListener('click', (e) => {
-            if (e.target.closest('.page-tab-del')) return;
+        tab.addEventListener('click', (clickEvent) => {
+            if (clickEvent.target.closest('.page-tab-del')) return;
             switchPage(page);
         });
         bar.insertBefore(tab, addBtn);
@@ -1556,28 +1624,28 @@ async function deletePage(event, pageId, isLast) {
 }
 
 async function executeClearLogs() {
-    const btn = document.getElementById('confirmDeleteBtn');
-    btn.disabled = true;
-    btn.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span>${t('clear.deleting')}`;
+    const deleteButton = document.getElementById('confirmDeleteBtn');
+    deleteButton.disabled = true;
+    deleteButton.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span>${t('clear.deleting')}`;
 
-    const params = new URLSearchParams();
+    const filterParams = new URLSearchParams();
     if (_clearScope === 'filtered') {
-        if (logFilter.level)   params.set('level',   logFilter.level);
-        if (logFilter.service) params.set('service', logFilter.service);
-        if (logFilter.from)    params.set('from',    logFilter.from);
-        if (logFilter.to)      params.set('to',      logFilter.to);
-        if (logFilter.q)       params.set('q',       logFilter.q);
+        if (logFilter.level)   filterParams.set('level',   logFilter.level);
+        if (logFilter.service) filterParams.set('service', logFilter.service);
+        if (logFilter.from)    filterParams.set('from',    logFilter.from);
+        if (logFilter.to)      filterParams.set('to',      logFilter.to);
+        if (logFilter.q)       filterParams.set('q',       logFilter.q);
     }
 
     try {
-        const res  = await fetch('/api/logs?' + params, { method: 'DELETE' });
-        const data = await res.json();
-        console.log(data.message);
-    } catch(e) {
-        console.error('Delete failed', e);
+        const deleteResponse = await fetch('/api/logs?' + filterParams, { method: 'DELETE' });
+        const deleteResult   = await deleteResponse.json();
+        console.log(deleteResult.message);
+    } catch (error) {
+        console.error('Delete failed', error);
     } finally {
-        btn.disabled = false;
-        btn.innerHTML = `<i class="bi bi-trash3 me-1"></i><span id="confirmDeleteLabel" data-i18n="clear.delete">${t('clear.delete')}</span>`;
+        deleteButton.disabled = false;
+        deleteButton.innerHTML = `<i class="bi bi-trash3 me-1"></i><span id="confirmDeleteLabel" data-i18n="clear.delete">${t('clear.delete')}</span>`;
     }
 
     bootstrap.Modal.getInstance(document.getElementById('clearLogsModal'))?.hide();

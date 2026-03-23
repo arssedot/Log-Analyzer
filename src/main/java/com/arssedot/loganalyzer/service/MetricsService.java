@@ -25,7 +25,7 @@ public class MetricsService {
     private static final DateTimeFormatter HOUR_FORMATTER =
             DateTimeFormatter.ofPattern("HH:mm").withZone(ZoneOffset.UTC);
 
-    private final LogEntryRepository repository;
+    private final LogEntryRepository logEntryRepository;
 
     @Transactional(readOnly = true)
     public MetricsSummaryDto getSummary() {
@@ -34,30 +34,34 @@ public class MetricsService {
 
     @Transactional(readOnly = true)
     public MetricsSummaryDto getSummary(String serviceName) {
-        boolean scoped = serviceName != null && !serviceName.isBlank();
+        boolean isScopedToService = serviceName != null && !serviceName.isBlank();
 
-        long total = scoped ? repository.countByServiceName(serviceName) : repository.count();
+        long totalLogs = isScopedToService
+                ? logEntryRepository.countByServiceName(serviceName)
+                : logEntryRepository.count();
 
-        Map<String, Long> countByLevel = scoped ? buildCountByLevelForService(serviceName) : buildCountByLevel();
+        Map<String, Long> countByLevel = isScopedToService
+                ? buildCountByLevelForService(serviceName)
+                : buildCountByLevel();
 
         Instant oneHourAgo = Instant.now().minus(1, ChronoUnit.HOURS);
-        long logsLastHour = scoped
-                ? repository.countByServiceNameAndTimestampAfter(serviceName, oneHourAgo)
-                : repository.countByTimestampAfter(oneHourAgo);
+        long logsLastHour = isScopedToService
+                ? logEntryRepository.countByServiceNameAndTimestampAfter(serviceName, oneHourAgo)
+                : logEntryRepository.countByTimestampAfter(oneHourAgo);
 
         double errorRate = computeErrorRate(logsLastHour, oneHourAgo, serviceName);
 
-        long servicesCount = scoped ? 1L : repository.countDistinctServiceNames();
+        long servicesCount = isScopedToService ? 1L : logEntryRepository.countDistinctServiceNames();
 
-        List<ServiceStat> topServices = scoped
-                ? List.of(new ServiceStat(serviceName, total))
-                : repository.findTopServices(PageRequest.of(0, 10)).stream()
-                        .map(row -> new ServiceStat((String) row[0], (Long) row[1]))
+        List<ServiceStat> topServices = isScopedToService
+                ? List.of(new ServiceStat(serviceName, totalLogs))
+                : logEntryRepository.findTopServices(PageRequest.of(0, 10)).stream()
+                        .map(serviceRow -> new ServiceStat((String) serviceRow[0], (Long) serviceRow[1]))
                         .toList();
 
-        List<TimeSeriesPoint> timeSeries = buildHourlyTimeSeries(24, scoped ? serviceName : null);
+        List<TimeSeriesPoint> timeSeries = buildHourlyTimeSeries(24, isScopedToService ? serviceName : null);
 
-        return new MetricsSummaryDto(total, countByLevel, errorRate, topServices, timeSeries, logsLastHour, servicesCount);
+        return new MetricsSummaryDto(totalLogs, countByLevel, errorRate, topServices, timeSeries, logsLastHour, servicesCount);
     }
 
     private Map<String, Long> buildCountByLevel() {
@@ -65,8 +69,8 @@ public class MetricsService {
         for (LogLevel level : LogLevel.values()) {
             result.put(level.name(), 0L);
         }
-        repository.countGroupedByLevel().forEach(row ->
-                result.put(((LogLevel) row[0]).name(), (Long) row[1])
+        logEntryRepository.countGroupedByLevel().forEach(levelRow ->
+                result.put(((LogLevel) levelRow[0]).name(), (Long) levelRow[1])
         );
         return result;
     }
@@ -76,42 +80,42 @@ public class MetricsService {
         for (LogLevel level : LogLevel.values()) {
             result.put(level.name(), 0L);
         }
-        repository.countGroupedByLevelForService(serviceName).forEach(row ->
-                result.put(((LogLevel) row[0]).name(), (Long) row[1])
+        logEntryRepository.countGroupedByLevelForService(serviceName).forEach(levelRow ->
+                result.put(((LogLevel) levelRow[0]).name(), (Long) levelRow[1])
         );
         return result;
     }
 
-    private double computeErrorRate(long totalRecent, Instant oneHourAgo, String serviceName) {
-        if (totalRecent == 0) return 0.0;
-        boolean scoped = serviceName != null && !serviceName.isBlank();
-        long errors = scoped
-                ? repository.countByServiceNameAndLevelAndTimestampAfter(serviceName, LogLevel.ERROR, oneHourAgo)
-                : repository.countByLevelAndTimestampAfter(LogLevel.ERROR, oneHourAgo);
-        return Math.round((errors * 100.0 / totalRecent) * 10.0) / 10.0;
+    private double computeErrorRate(long totalLogsInLastHour, Instant oneHourAgo, String serviceName) {
+        if (totalLogsInLastHour == 0) return 0.0;
+        boolean isScopedToService = serviceName != null && !serviceName.isBlank();
+        long errorCount = isScopedToService
+                ? logEntryRepository.countByServiceNameAndLevelAndTimestampAfter(serviceName, LogLevel.ERROR, oneHourAgo)
+                : logEntryRepository.countByLevelAndTimestampAfter(LogLevel.ERROR, oneHourAgo);
+        return Math.round((errorCount * 100.0 / totalLogsInLastHour) * 10.0) / 10.0;
     }
 
-    private List<TimeSeriesPoint> buildHourlyTimeSeries(int hours, String serviceName) {
-        Instant since = Instant.now().minus(hours, ChronoUnit.HOURS).truncatedTo(ChronoUnit.HOURS);
+    private List<TimeSeriesPoint> buildHourlyTimeSeries(int hoursBack, String serviceName) {
+        Instant since = Instant.now().minus(hoursBack, ChronoUnit.HOURS).truncatedTo(ChronoUnit.HOURS);
         List<LogEntry> entries = (serviceName != null)
-                ? repository.findByServiceNameAndTimestampAfterOrderByTimestampAsc(serviceName, since)
-                : repository.findByTimestampAfterOrderByTimestampAsc(since);
+                ? logEntryRepository.findByServiceNameAndTimestampAfterOrderByTimestampAsc(serviceName, since)
+                : logEntryRepository.findByTimestampAfterOrderByTimestampAsc(since);
 
         Map<String, Long> buckets = new LinkedHashMap<>();
         Instant cursor = since;
-        Instant now = Instant.now().truncatedTo(ChronoUnit.HOURS);
-        while (!cursor.isAfter(now)) {
+        Instant nowTruncated = Instant.now().truncatedTo(ChronoUnit.HOURS);
+        while (!cursor.isAfter(nowTruncated)) {
             buckets.put(HOUR_FORMATTER.format(cursor), 0L);
             cursor = cursor.plus(1, ChronoUnit.HOURS);
         }
 
-        entries.forEach(e -> {
-            String bucket = HOUR_FORMATTER.format(e.getTimestamp().truncatedTo(ChronoUnit.HOURS));
-            buckets.merge(bucket, 1L, Long::sum);
+        entries.forEach(logEntry -> {
+            String hourBucket = HOUR_FORMATTER.format(logEntry.getTimestamp().truncatedTo(ChronoUnit.HOURS));
+            buckets.merge(hourBucket, 1L, Long::sum);
         });
 
         return buckets.entrySet().stream()
-                .map(entry -> new TimeSeriesPoint(entry.getKey(), entry.getValue()))
+                .map(bucketEntry -> new TimeSeriesPoint(bucketEntry.getKey(), bucketEntry.getValue()))
                 .collect(Collectors.toList());
     }
 }

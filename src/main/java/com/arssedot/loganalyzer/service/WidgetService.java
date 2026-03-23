@@ -96,13 +96,13 @@ public class WidgetService {
                 new Def("CHART_LEVEL",     "MEDIUM", 7)
         );
         List<Widget> list = defaults.stream()
-                .map(d -> Widget.builder()
+                .map(widgetDef -> Widget.builder()
                         .user(user)
                         .page(page)
-                        .type(d.type())
-                        .title(defaultTitle(d.type()))
-                        .size(d.size())
-                        .position(d.pos())
+                        .type(widgetDef.type())
+                        .title(defaultTitle(widgetDef.type()))
+                        .size(widgetDef.size())
+                        .position(widgetDef.pos())
                         .build())
                 .toList();
         return widgetRepository.saveAll(list);

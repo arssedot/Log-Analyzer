@@ -22,40 +22,40 @@ public class UserProfileService {
     public record UpdateRequest(String displayName, String language) {}
 
     @Transactional(readOnly = true)
-    public ProfileDto getProfile(User user) {
-        User u = userRepository.findById(user.getId()).orElse(user);
-        return toDto(u);
+    public ProfileDto getProfile(User currentUser) {
+        User managedUser = userRepository.findById(currentUser.getId()).orElse(currentUser);
+        return toDto(managedUser);
     }
 
     @Transactional
-    public ProfileDto updateProfile(User user, UpdateRequest req) {
-        User u = userRepository.findById(user.getId()).orElseThrow();
-        if (req.displayName() != null) {
-            u.setDisplayName(req.displayName().isBlank() ? null : req.displayName().strip());
+    public ProfileDto updateProfile(User currentUser, UpdateRequest updateRequest) {
+        User managedUser = userRepository.findById(currentUser.getId()).orElseThrow();
+        if (updateRequest.displayName() != null) {
+            managedUser.setDisplayName(updateRequest.displayName().isBlank() ? null : updateRequest.displayName().strip());
         }
-        if (req.language() != null && List.of("en", "ru").contains(req.language())) {
-            u.setLanguage(req.language());
+        if (updateRequest.language() != null && List.of("en", "ru").contains(updateRequest.language())) {
+            managedUser.setLanguage(updateRequest.language());
         }
-        return toDto(userRepository.save(u));
+        return toDto(userRepository.save(managedUser));
     }
 
     @Transactional
-    public ProfileDto uploadAvatar(User user, MultipartFile file) throws IOException {
-        User u = userRepository.findById(user.getId()).orElseThrow();
-        String mime = Objects.requireNonNullElse(file.getContentType(), "image/jpeg");
-        String dataUri = "data:" + mime + ";base64," + Base64.getEncoder().encodeToString(file.getBytes());
-        u.setAvatarData(dataUri);
-        return toDto(userRepository.save(u));
+    public ProfileDto uploadAvatar(User currentUser, MultipartFile file) throws IOException {
+        User managedUser = userRepository.findById(currentUser.getId()).orElseThrow();
+        String mimeType = Objects.requireNonNullElse(file.getContentType(), "image/jpeg");
+        String dataUri = "data:" + mimeType + ";base64," + Base64.getEncoder().encodeToString(file.getBytes());
+        managedUser.setAvatarData(dataUri);
+        return toDto(userRepository.save(managedUser));
     }
 
     @Transactional
-    public ProfileDto removeAvatar(User user) {
-        User u = userRepository.findById(user.getId()).orElseThrow();
-        u.setAvatarData(null);
-        return toDto(userRepository.save(u));
+    public ProfileDto removeAvatar(User currentUser) {
+        User managedUser = userRepository.findById(currentUser.getId()).orElseThrow();
+        managedUser.setAvatarData(null);
+        return toDto(userRepository.save(managedUser));
     }
 
-    private static ProfileDto toDto(User u) {
-        return new ProfileDto(u.getEmail(), u.getDisplayName(), u.getLanguage(), u.getAvatarData());
+    private static ProfileDto toDto(User user) {
+        return new ProfileDto(user.getEmail(), user.getDisplayName(), user.getLanguage(), user.getAvatarData());
     }
 }

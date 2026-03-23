@@ -23,7 +23,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, Object>> handleValidation(MethodArgumentNotValidException ex) {
         String errors = ex.getBindingResult().getFieldErrors().stream()
-                .map(fe -> fe.getField() + ": " + fe.getDefaultMessage())
+                .map(fieldError -> fieldError.getField() + ": " + fieldError.getDefaultMessage())
                 .collect(Collectors.joining(", "));
         return ResponseEntity.badRequest().body(Map.of("error", errors));
     }

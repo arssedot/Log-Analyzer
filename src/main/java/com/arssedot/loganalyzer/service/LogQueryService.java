@@ -24,7 +24,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class LogQueryService {
 
-    private final LogEntryRepository repository;
+    private final LogEntryRepository logEntryRepository;
 
     @Transactional(readOnly = true)
     public Page<LogEntry> search(LogFilterDto filter) {
@@ -34,12 +34,12 @@ public class LogQueryService {
                 filter.getSize(),
                 Sort.by(Sort.Direction.DESC, "timestamp")
         );
-        return repository.findAll(spec, pageable);
+        return logEntryRepository.findAll(spec, pageable);
     }
 
     @Transactional(readOnly = true)
     public List<String> getDistinctServices() {
-        return repository.findDistinctServiceNames();
+        return logEntryRepository.findDistinctServiceNames();
     }
 
     @Transactional
@@ -51,55 +51,55 @@ public class LogQueryService {
                 || hasText(filter.getQ());
 
         if (!hasFilter) {
-            long count = repository.count();
-            repository.deleteAllInBatch();
-            return count;
+            long totalCount = logEntryRepository.count();
+            logEntryRepository.deleteAllInBatch();
+            return totalCount;
         }
 
-        List<LogEntry> toDelete = repository.findAll(buildSpec(filter));
-        if (!toDelete.isEmpty()) {
-            repository.deleteAllInBatch(toDelete);
+        List<LogEntry> entriesToDelete = logEntryRepository.findAll(buildSpec(filter));
+        if (!entriesToDelete.isEmpty()) {
+            logEntryRepository.deleteAllInBatch(entriesToDelete);
         }
-        return toDelete.size();
+        return entriesToDelete.size();
     }
 
     private Specification<LogEntry> buildSpec(LogFilterDto filter) {
-        return (root, query, cb) -> {
+        return (root, criteriaQuery, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
 
             if (hasText(filter.getLevel())) {
                 try {
-                    LogLevel level = LogLevel.valueOf(filter.getLevel());
-                    predicates.add(cb.equal(root.get("level"), level));
+                    LogLevel logLevel = LogLevel.valueOf(filter.getLevel());
+                    predicates.add(criteriaBuilder.equal(root.get("level"), logLevel));
                 } catch (IllegalArgumentException ignored) {
                 }
             }
 
             if (hasText(filter.getService())) {
-                predicates.add(cb.like(
-                        cb.lower(root.get("serviceName")),
+                predicates.add(criteriaBuilder.like(
+                        criteriaBuilder.lower(root.get("serviceName")),
                         "%" + filter.getService().toLowerCase() + "%"
                 ));
             }
 
-            Instant from = parseDateTime(filter.getFrom());
-            if (from != null) {
-                predicates.add(cb.greaterThanOrEqualTo(root.get("timestamp"), from));
+            Instant fromInstant = parseDateTime(filter.getFrom());
+            if (fromInstant != null) {
+                predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("timestamp"), fromInstant));
             }
 
-            Instant to = parseDateTime(filter.getTo());
-            if (to != null) {
-                predicates.add(cb.lessThanOrEqualTo(root.get("timestamp"), to));
+            Instant toInstant = parseDateTime(filter.getTo());
+            if (toInstant != null) {
+                predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("timestamp"), toInstant));
             }
 
             if (hasText(filter.getQ())) {
-                predicates.add(cb.like(
-                        cb.lower(root.get("message")),
+                predicates.add(criteriaBuilder.like(
+                        criteriaBuilder.lower(root.get("message")),
                         "%" + filter.getQ().toLowerCase() + "%"
                 ));
             }
 
-            return cb.and(predicates.toArray(new Predicate[0]));
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         };
     }
 
@@ -111,7 +111,7 @@ public class LogQueryService {
         if (!hasText(value)) return null;
         try {
             return LocalDateTime.parse(value).toInstant(ZoneOffset.UTC);
-        } catch (DateTimeParseException e) {
+        } catch (DateTimeParseException ignored) {
             return null;
         }
     }

@@ -31,7 +31,7 @@ public class DashboardPageService {
         if (pages.isEmpty()) {
             return List.of(PageDto.from(createDefault(user)));
         }
-        return pages.stream().map(PageDto::from).toList();
+        return pages.stream().map(dashboardPage -> PageDto.from(dashboardPage)).toList();
     }
 
     @Transactional
