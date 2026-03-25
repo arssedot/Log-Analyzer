@@ -37,7 +37,6 @@ public interface LogEntryRepository extends JpaRepository<LogEntry, Long>, JpaSp
 
     Page<LogEntry> findAllByOrderByTimestampDesc(Pageable pageable);
 
-    // Service-scoped variants for per-page metrics
     long countByServiceName(String serviceName);
 
     long countByServiceNameAndTimestampAfter(String serviceName, Instant since);

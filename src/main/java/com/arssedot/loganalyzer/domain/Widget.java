@@ -44,6 +44,8 @@ public class Widget {
 
     @PrePersist
     void prePersist() {
-        if (createdAt == null) createdAt = Instant.now();
+        if (createdAt == null) {
+            createdAt = Instant.now(); 
+        }
     }
 }

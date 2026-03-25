@@ -17,7 +17,7 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class UserProfileController {
 
-    private static final long MAX_AVATAR_BYTES = 2 * 1024 * 1024; // 2 MB
+    private static final long MAX_AVATAR_BYTES = 2 * 1024 * 1024; 
 
     private final UserProfileService profileService;
 

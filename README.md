@@ -6,21 +6,23 @@
 
 ## Стек технологий
 
-| Слой | Технология | Назначение |
-|---|---|---|
-| Язык | Java 25 | основной язык разработки |
-| Фреймворк | Spring Boot 3.5 | веб-сервер, DI, конфигурация |
-| База данных | PostgreSQL 16 | хранение логов и данных пользователей |
-| Очередь сообщений | Apache Kafka | приём логов от внешних сервисов |
-| Миграции БД | Flyway | версионирование схемы базы данных |
-| ORM | Spring Data JPA / Hibernate | работа с базой данных |
-| Шаблонизатор | Thymeleaf | серверный рендеринг HTML |
-| Безопасность | Spring Security | аутентификация, хеширование паролей  |
-| Графики | Chart.js | визуализация данных на дашборде |
-| Drag-and-drop | SortableJS | перетаскивание виджетов |
-| Контейнеризация | Docker  | запуск всего стека одной командой |
-| Сборка | Apache Maven | управление зависимостями |
-| Утилиты | Lombok | сокращение шаблонного кода |
+
+| Слой              | Технология                  | Назначение                            |
+| ----------------- | --------------------------- | ------------------------------------- |
+| Язык              | Java 25                     | основной язык разработки              |
+| Фреймворк         | Spring Boot 3.5             | веб-сервер, DI, конфигурация          |
+| База данных       | PostgreSQL 16               | хранение логов и данных пользователей |
+| Очередь сообщений | Apache Kafka                | приём логов от внешних сервисов       |
+| Миграции БД       | Flyway                      | версионирование схемы базы данных     |
+| ORM               | Spring Data JPA / Hibernate | работа с базой данных                 |
+| Шаблонизатор      | Thymeleaf                   | серверный рендеринг HTML              |
+| Безопасность      | Spring Security             | аутентификация, хеширование паролей   |
+| Графики           | Chart.js                    | визуализация данных на дашборде       |
+| Drag-and-drop     | SortableJS                  | перетаскивание виджетов               |
+| Контейнеризация   | Docker                      | запуск всего стека одной командой     |
+| Сборка            | Apache Maven                | управление зависимостями              |
+| Утилиты           | Lombok                      | сокращение шаблонного кода            |
+
 
 ---
 
@@ -93,16 +95,14 @@ http://localhost:8080
 
 ## Как открыть доступ другим пользователям
 
-### Вариант 1: локальная сеть 
+### Вариант 1: локальная сеть
 
 Подходит для демонстрации пользователям в одной сети
 
 1. Узнать свой локальный IP-адрес:
-   - Windows: `ipconfig` — строка *IPv4 Address* 
-   - macOS / Linux: `ip a` или `ifconfig`
-
-2. Проверить, что брандмауэр разрешает входящие подключения на порт **8080**  
-
+  - Windows: `ipconfig` - строка *IPv4 Address* 
+  - macOS / Linux: `ip a` или `ifconfig`
+2. Проверить, что брандмауэр разрешает входящие подключения на порт **8080**
 3. Поделиться адресом: `http://192.168.1.42:8080`
 
 ---
@@ -112,14 +112,13 @@ http://localhost:8080
 Работает без сервера, через любой интернет
 
 1. Установить [ngrok](https://ngrok.com/) и зарегистрироваться там
-
 2. Запустить приложение локально, затем в отдельном терминале ввести следующее:
 
 ```bash
 ngrok http 8080
 ```
 
-3. ngrok выдаст публичный адрес вида `https://abc123.ngrok-free.app` - им нужно будет поделиться
+1. ngrok выдаст публичный адрес вида `https://abc123.ngrok-free.app` - им нужно будет поделиться
 
 ---
 
@@ -147,14 +146,16 @@ Content-Type: application/json
 }
 ```
 
-| Поле          | Обязательное | Допустимые значения           |
-|---------------|:---:|-------------------------------|
-| `timestamp`   | Нет | ISO-8601; по умолчанию — текущее время |
-| `level`       | Да  | `DEBUG` `INFO` `WARN` `ERROR` |
-| `serviceName` | Да  | Строка до 100 символов        |
-| `message`     | Да  | Любая строка                  |
-| `traceId`     | Нет | До 64 символов                |
-| `host`        | Нет | До 100 символов               |
+
+| Поле          | Обязательное | Допустимые значения                    |
+| ------------- | ------------ | -------------------------------------- |
+| `timestamp`   | нет          | ISO-8601; по умолчанию - текущее время |
+| `level`       | да           | `DEBUG` `INFO` `WARN` `ERROR`          |
+| `serviceName` | да           | строка до 100 символов                 |
+| `message`     | да           | любая строка                           |
+| `traceId`     | нет          | до 64 символов                         |
+| `host`        | нет          | до 100 символов                        |
+
 
 ---
 
@@ -163,10 +164,10 @@ Content-Type: application/json
 Требования: **JDK 25**, **Docker Desktop** (только для Postgres и Kafka)
 
 ```bash
-# Запустить только инфраструктуру
+# запустить только инфраструктуру
 docker compose up postgres kafka -d
 
-# Запустить приложение в IntelliJ IDEA
+# запустить приложение в IntelliJ IDEA
 # Run Configuration -> Active profiles: local
 ```
 
@@ -178,58 +179,58 @@ docker compose up postgres kafka -d
 
 ```
 src/main/java/com/arssedot/loganalyzer/
-├── config/             # Spring Security, Kafka
-├── domain/             # JPA-сущности: LogEntry, User, Widget
-├── kafka/              # Kafka producer и consumer
-├── repository/         # Spring Data JPA репозитории
-├── service/            # Бизнес-логика
+├── config/ # Spring Security, Kafka
+├── domain/ # JPA-сущности: LogEntry, User, Widget
+├── kafka/ # Kafka producer и consumer
+├── repository/ # Spring Data JPA репозитории
+├── service/ # бизнес-логика
 └── web/
-    ├── controller/     # REST и MVC контроллеры
-    └── dto/            # DTO запросов и ответов
+    ├── controller/ # REST и MVC контроллеры
+    └── dto/ # DTO запросов и ответов
 
 src/main/resources/
-├── db/migration/       # Flyway SQL миграции 
-├── templates/          # Thymeleaf шаблоны (dashboard, login, register)
-└── application*.yml    # Конфигурация профилей (dev, local, docker)
+├── db/migration/ # Flyway SQL миграции 
+├── templates/ # Thymeleaf шаблоны 
+└── application*.yml # конфигурация профилей 
 ```
 
 ---
 
 ## Переменные окружения
 
-| Переменная | По умолчанию | Описание |
-|---|---|---|
-| `DB_HOST` | `postgres` | хост PostgreSQL |
-| `DB_PORT` | `5432` | порт PostgreSQL |
-| `DB_NAME` | `loganalyzer` | название базы данных |
-| `DB_USER` | `loganalyzer` | пользователь базы данных |
-| `DB_PASSWORD` | *(обязательно)* | пароль |
-| `KAFKA_BOOTSTRAP_SERVERS` | `kafka:9092` | адрес Kafka-брокера |
+
+| Переменная                | По умолчанию    | Описание                 |
+| ------------------------- | --------------- | ------------------------ |
+| `DB_HOST`                 | `postgres`      | хост PostgreSQL          |
+| `DB_PORT`                 | `5432`          | порт PostgreSQL          |
+| `DB_NAME`                 | `loganalyzer`   | название базы данных     |
+| `DB_USER`                 | `loganalyzer`   | пользователь базы данных |
+| `DB_PASSWORD`             | *(обязательно)* | пароль                   |
+| `KAFKA_BOOTSTRAP_SERVERS` | `kafka:9092`    | адрес Kafka-брокера      |
+
 
 ---
 
 ## Обновления
+
 - 22.03.26 - добавлена возможность использовать несколько страниц с виджетами для просмотра логов разных запущенных проектов в один момент времен
+- 25.03.26 - различные багфиксы
 
 ---
 
 ## Иллюстрации интерфейса
 
 ### 1. Настройки
-<img width="857" height="786" alt="Снимок экрана 2026-03-22 014957" src="https://github.com/user-attachments/assets/3dc53062-0303-42ff-914d-38f219050b60" />
+
 
 
 ### 2. Панель виджетов
-<img width="1397" height="876" alt="Снимок экрана 2026-03-22 015151" src="https://github.com/user-attachments/assets/f1997b95-94a0-4213-b391-c123ecd7ea97" />
+
 
 
 ### 3. Развернутые виджеты
-<img width="2527" height="1178" alt="Снимок экрана 2026-03-22 015114" src="https://github.com/user-attachments/assets/f53c26fc-1e51-4bff-bb74-e61f14c4e84c" />
+
 
 
 ### 4. Таблица с логами
-<img width="2524" height="1162" alt="Снимок экрана 2026-03-22 015136" src="https://github.com/user-attachments/assets/6e2b210a-59ef-476e-b92f-50734bcdff11" />
-
-
-
 

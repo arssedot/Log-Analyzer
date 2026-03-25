@@ -108,7 +108,9 @@ public class LogQueryService {
     }
 
     private static Instant parseDateTime(String value) {
-        if (!hasText(value)) return null;
+        if (!hasText(value)) {
+            return null;
+        }
         try {
             return LocalDateTime.parse(value).toInstant(ZoneOffset.UTC);
         } catch (DateTimeParseException ignored) {

@@ -1,13 +1,13 @@
 <!DOCTYPE html>
-<script>
-    (function() {
-        document.documentElement.setAttribute('data-bs-theme', localStorage.getItem('la-theme') || 'dark');
-    })();
-</script>
 <html xmlns:th="http://www.thymeleaf.org"
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
       lang="en">
 <head>
+    <script>
+        (function () {
+            document.documentElement.setAttribute('data-bs-theme', localStorage.getItem('la-theme') || 'dark');
+        })();
+    </script>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Log Analyzer</title>
@@ -15,7 +15,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"/>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"/>
     <style>
-        /* ── Themes ─────────────────────────────────────────────────── */
+        /* Themes */
         [data-bs-theme="dark"] {
             --bg-base:    #0d1117;
             --bg-surface: #161b22;
@@ -37,7 +37,7 @@
 
         body { background: var(--bg-base); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; transition: background .2s, color .2s; }
 
-        /* ── Navbar ──────────────────────────────────────────────────── */
+        /* Navbar */
         .navbar { background: var(--bg-surface) !important; border-bottom: 1px solid var(--border); }
         .navbar-brand { font-weight: 700; font-size: 1.2rem; letter-spacing: .5px; }
         .theme-toggle { display: flex; align-items: center; gap: 6px; cursor: pointer; }
@@ -48,10 +48,10 @@
         .stream-pill { background: rgba(218,54,51,.12); border: 1px solid rgba(248,81,73,.3); border-radius: 20px; padding: 3px 10px; gap: 6px; }
         .stream-pill .live-dot { background: #f85149; }
 
-        /* ── Cards ───────────────────────────────────────────────────── */
+        /* Cards */
         .card { background: var(--bg-surface); border: 1px solid var(--border); border-radius: 10px; transition: border-color .2s; }
 
-        /* ── Stat widgets ────────────────────────────────────────────── */
+        /* Stat widgets */
         .stat-label { font-size: .68rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: .6px; font-weight: 600; margin-bottom: 6px; }
         .stat-value { font-size: clamp(1.1rem, 3.5vw, 1.9rem); font-weight: 700; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .stat-sub   { font-size: .67rem; color: var(--text-muted); margin-top: 5px; }
@@ -65,11 +65,11 @@
         @keyframes flash-val { 0%,100%{opacity:1} 45%{opacity:.2} }
         .val-flash { animation: flash-val .5s ease; }
 
-        /* ── Charts ──────────────────────────────────────────────────── */
+        /* Charts */
         .chart-wrap { position: relative; height: 220px; }
         .widget-title { font-size: .68rem; text-transform: uppercase; letter-spacing: .6px; font-weight: 600; color: var(--text-muted); margin-bottom: 12px; }
 
-        /* ── Tables ──────────────────────────────────────────────────── */
+        /* Tables */
         .table { color: var(--text); --bs-table-bg: transparent; }
         .table thead th { background: var(--bg-raised); border-color: var(--border); color: var(--text-muted); font-size: .7rem; text-transform: uppercase; letter-spacing: .5px; }
         .table tbody tr { border-color: var(--border); }
@@ -77,19 +77,19 @@
         .table td { vertical-align: middle; font-size: .83rem; }
         .msg-cell { max-width: 380px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-        /* ── Forms ───────────────────────────────────────────────────── */
+        /* Forms */
         .form-control, .form-select { background: var(--bg-raised); border-color: var(--border); color: var(--text); font-size: .84rem; }
         .form-control:focus, .form-select:focus { background: var(--bg-raised); color: var(--text); border-color: var(--accent); box-shadow: 0 0 0 .18rem rgba(88,166,255,.2); }
         .form-control::placeholder { color: var(--text-muted); }
         .form-select option { background: var(--bg-raised); }
 
-        /* ── Badges ──────────────────────────────────────────────────── */
+        /* Badges */
         .badge-DEBUG { background: #6c757d !important; }
         .badge-INFO  { background: #1f6feb !important; }
         .badge-WARN  { background: #d29922 !important; color:#fff!important; }
         .badge-ERROR { background: #da3633 !important; }
 
-        /* ── Pagination ──────────────────────────────────────────────── */
+        /* Pagination */
         .pagination .page-link { background: var(--bg-raised); border-color: var(--border); color: var(--accent); cursor: pointer; }
         .pagination .page-link:hover { background: var(--border); }
         .pagination .page-item.active .page-link { background: #1f6feb; border-color: #1f6feb; color: #fff; cursor: default; }
@@ -98,11 +98,11 @@
         /* "Go to page" input */
         #gotoPage { width: 62px; text-align: center; }
 
-        /* ── Misc ────────────────────────────────────────────────────── */
+        /* Misc */
         .btn-outline-secondary { border-color: var(--border); color: var(--text-muted); }
         .btn-outline-secondary:hover { background: var(--bg-raised); color: var(--text); }
 
-        /* ── Drag & Drop ─────────────────────────────────────────────── */
+        /* Drag and Drop */
         .widget-col { position: relative; }
         #widget-grid .card { min-height: 90px; }
         .drag-handle { position: absolute; top: 10px; left: 12px; color: var(--text-muted); opacity: 0; cursor: grab; font-size: 1.05rem; line-height: 1; z-index: 3; padding: 2px 4px; border-radius: 4px; transition: opacity .15s; user-select: none; }
@@ -117,7 +117,7 @@
         .widget-ghost .card { opacity: .18; border: 2px dashed var(--accent) !important; background: transparent; }
         .widget-chosen .card { box-shadow: 0 14px 40px rgba(0,0,0,.45); border-color: var(--accent) !important; }
 
-        /* ── Add-widget modal ─────────────────────────────────────────── */
+        /* Add-widget modal */
         .modal-content { background: var(--bg-surface); border: 1px solid var(--border); color: var(--text); }
         .modal-header  { border-bottom: 1px solid var(--border); }
         .widget-type-card { cursor: pointer; border: 2px solid var(--border); border-radius: 8px; padding: 12px 8px; text-align: center; transition: border-color .15s, transform .12s; background: var(--bg-raised); }
@@ -126,14 +126,14 @@
         .wt-label { font-size: .75rem; font-weight: 600; margin-top: 5px; }
         .wt-desc  { font-size: .65rem; color: var(--text-muted); margin-top: 2px; line-height: 1.3; }
 
-        /* ── Log table header ────────────────────────────────────────── */
+        /* Log table header */
         .log-section-title { font-size: .68rem; text-transform: uppercase; letter-spacing: .7px; font-weight: 600; color: var(--text-muted); margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
         .log-live-badge { background: rgba(63,185,80,.15); color: #3fb950; border: 1px solid rgba(63,185,80,.3); border-radius: 10px; padding: 1px 8px; font-size: .65rem; font-weight: 700; }
 
-        /* ── Clear Logs modal ────────────────────────────────────────── */
+        /* Clear Logs modal */
         .scope-selected { border-color: var(--accent) !important; background: var(--bg-raised); }
 
-        /* ── Page tabs ────────────────────────────────────────────────── */
+        /* Page tabs */
         .page-tabs-bar { background: var(--bg-surface); border-bottom: 1px solid var(--border); padding: 0 1.5rem; display: flex; align-items: center; gap: 2px; overflow-x: auto; }
         .page-tab { display: flex; align-items: center; gap: 6px; padding: 10px 16px; border-bottom: 2px solid transparent; font-size: .82rem; font-weight: 500; color: var(--text-muted); cursor: pointer; white-space: nowrap; background: none; border-top: none; border-left: none; border-right: none; transition: color .15s, border-color .15s; }
         .page-tab:hover { color: var(--text); }
@@ -146,7 +146,7 @@
         .page-tab-add { display: flex; align-items: center; gap: 4px; padding: 8px 10px; font-size: .8rem; color: var(--text-muted); cursor: pointer; background: none; border: none; border-radius: 6px; transition: color .15s, background .15s; margin-left: 4px; flex-shrink: 0; }
         .page-tab-add:hover { color: var(--text); background: var(--bg-raised); }
 
-        /* ── User avatar (navbar + settings) ─────────────────────────── */
+        /* User avatar (navbar + settings) */
         .user-avatar { width:32px; height:32px; border-radius:50%; background:var(--accent); color:#fff; display:flex; align-items:center; justify-content:center; font-size:.75rem; font-weight:700; overflow:hidden; flex-shrink:0; cursor:pointer; border:2px solid transparent; transition:border-color .2s; }
         .user-avatar:hover { border-color:var(--accent); }
         .user-avatar img { width:100%; height:100%; object-fit:cover; }
@@ -154,11 +154,11 @@
         .settings-avatar:hover { border-color:var(--accent); }
         .settings-avatar img { width:100%; height:100%; object-fit:cover; }
 
-        /* ── Gauge widget ─────────────────────────────────────────────── */
+        /* Gauge widget */
         .gauge-wrap { position:relative; height:178px; }
         .gauge-overlay { position:absolute; bottom:12%; left:50%; transform:translateX(-50%); text-align:center; pointer-events:none; white-space:nowrap; }
 
-        /* ── Settings modal ───────────────────────────────────────────── */
+        /* Settings modal */
         .modal-footer { border-top: 1px solid var(--border); }
         .settings-section-label { font-size:.7rem; text-transform:uppercase; letter-spacing:.6px; font-weight:600; color:var(--text-muted); margin-bottom:10px; }
         .lang-btn-active { background:var(--accent) !important; border-color:var(--accent) !important; color:#fff !important; }
@@ -166,7 +166,7 @@
 </head>
 <body>
 
-<!-- ── Navbar ─────────────────────────────────────────────────────────── -->
+<!-- Navbar -->
 <nav class="navbar px-3 mb-4">
     <span class="navbar-brand"><i class="bi bi-activity me-2 text-info"></i>Log Analyzer</span>
     <div class="d-flex align-items-center gap-2 flex-wrap">
@@ -219,7 +219,7 @@
     </div>
 </nav>
 
-<!-- ── Page Tabs ──────────────────────────────────────────────────────── -->
+<!-- Page Tabs -->
 <div class="page-tabs-bar mb-0" id="pageTabs">
     <button class="page-tab-add" onclick="openAddPageModal()" id="addPageBtn">
         <i class="bi bi-plus-lg"></i><span data-i18n="page.addPage">New page</span>
@@ -228,7 +228,7 @@
 
 <div class="container-fluid px-4 pt-3">
 
-    <!-- ── Widget Grid ─────────────────────────────────────────────── -->
+    <!-- Widget Grid -->
     <div id="widget-grid" class="row g-3 mb-4"></div>
     <div id="widget-empty" class="text-center text-muted py-5 mb-4" style="display:none;">
         <i class="bi bi-grid fs-1 d-block mb-2 opacity-50"></i>
@@ -238,7 +238,7 @@
         </button>
     </div>
 
-    <!-- ── Live Log Table ─────────────────────────────────────────── -->
+    <!-- Live log table -->
     <div class="card p-3 mb-4">
 
         <!-- Section header -->
@@ -252,7 +252,7 @@
             </button>
         </div>
 
-        <!-- Filter form (no page reload — handled by JS) -->
+        <!-- Filter form -->
         <form id="logFilterForm" class="row g-2 mb-3 align-items-end" onsubmit="applyFilter(event)">
             <div class="col-6 col-md-2">
                 <label class="form-label text-muted small mb-1" data-i18n="log.level">Level</label>
@@ -322,7 +322,7 @@
             </table>
         </div>
 
-        <!-- Pagination + Go to page -->
+        <!-- Pagination + go to page -->
         <div class="mt-3 d-flex align-items-center justify-content-between flex-wrap gap-3">
             <div id="logPagination"></div>
             <div class="d-flex align-items-center gap-2" id="gotoWrap" style="display:none;">
@@ -335,7 +335,7 @@
     </div>
 </div>
 
-<!-- ── Clear Logs Modal ──────────────────────────────────────────────── -->
+<!-- Clear Logs Modal -->
 <div class="modal fade" id="clearLogsModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -391,7 +391,7 @@
     </div>
 </div>
 
-<!-- ── Add / Edit Page Modal ─────────────────────────────────────────── -->
+<!-- Add/Edit Page Modal -->
 <div class="modal fade" id="pageModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -424,7 +424,7 @@
     </div>
 </div>
 
-<!-- ── Settings Modal ────────────────────────────────────────────────── -->
+<!-- Settings Modal -->
 <div class="modal fade" id="settingsModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -482,7 +482,7 @@
     </div>
 </div>
 
-<!-- ── Add Widget Modal ──────────────────────────────────────────────── -->
+<!-- Add Widget Modal -->
 <div class="modal fade" id="addWidgetModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -501,18 +501,17 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.3/Sortable.min.js"></script>
 <script>
-// ════════════════════════════════════════════════════════════════════
+
 // Theme
-// ════════════════════════════════════════════════════════════════════
 function isDark() { return document.documentElement.getAttribute('data-bs-theme') === 'dark'; }
 function chartColors() {
     const darkTheme = isDark();
     return {
-        grid:     darkTheme ? '#21262d' : '#e8ecef',
-        tick:     darkTheme ? '#8b949e' : '#6a737d',
-        legend:   darkTheme ? '#8b949e' : '#6a737d',
-        border:   darkTheme ? '#161b22' : '#ffffff',
-        line:     darkTheme ? '#58a6ff' : '#0969da',
+        grid: darkTheme ? '#21262d' : '#e8ecef',
+        tick: darkTheme ? '#8b949e' : '#6a737d',
+        legend: darkTheme ? '#8b949e' : '#6a737d',
+        border: darkTheme ? '#161b22' : '#ffffff',
+        line: darkTheme ? '#58a6ff' : '#0969da',
         lineFill: darkTheme ? 'rgba(88,166,255,.07)' : 'rgba(9,105,218,.07)',
     };
 }
@@ -523,12 +522,10 @@ function toggleTheme(themeCheckbox) {
     applyAllChartThemes();
 }
 
-// ════════════════════════════════════════════════════════════════════
 // State
-// ════════════════════════════════════════════════════════════════════
 const chartInstances = new Map();
-const widgetRegistry  = new Map();
-let   metricsCache    = null;
+const widgetRegistry = new Map();
+let metricsCache = null;
 
 // Log table state
 let logFilter = { level:'', service:'', from:'', to:'', q:'', page:0, size:20 };
@@ -538,14 +535,14 @@ let logTotalPages = 0;
 let systemMetrics = null;
 
 // Dashboard pages
-let currentPage   = null;  // { id, name, serviceName, position }
-let _editingPageId = null; // for edit page modal
+let currentPage = null; // { id, name, serviceName, position }
+let _editingPageId = null;
 
 // Profile
-let userProfile   = null;
-let _pendingLang  = null;
+let userProfile = null;
+let _pendingLang = null;
 
-// i18n — current language (from profile or localStorage)
+// Current language
 let currentLang = localStorage.getItem('la-lang') || 'en';
 const I18N = {
     en: {
@@ -625,7 +622,6 @@ function t(key) { return I18N[currentLang]?.[key] ?? I18N.en[key] ?? key; }
 function applyI18n() {
     document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.getAttribute('data-i18n')); });
     document.querySelectorAll('[data-i18n-placeholder]').forEach(el => { el.placeholder = t(el.getAttribute('data-i18n-placeholder')); });
-    // Stream button text is managed by updateStreamUI()
     updateStreamUI();
     const englishBtn = document.getElementById('langBtnEn');
     const russianBtn = document.getElementById('langBtnRu');
@@ -633,41 +629,37 @@ function applyI18n() {
     if (russianBtn) russianBtn.className = 'btn btn-outline-secondary btn-sm' + (currentLang === 'ru' ? ' lang-btn-active' : '');
 }
 
-// ════════════════════════════════════════════════════════════════════
 // Widget catalogue
-// ════════════════════════════════════════════════════════════════════
 const WIDGET_DEFS = {
-    STAT_TOTAL:     { label:'Total Logs',     icon:'bi-layers',               desc:'All-time log count',         col:'col-6 col-md-3' },
-    STAT_ERRORS:    { label:'Error Count',     icon:'bi-x-circle',             desc:'ERROR level log count',      col:'col-6 col-md-3' },
-    STAT_WARNS:     { label:'Warnings',        icon:'bi-exclamation-triangle',  desc:'WARN level log count',       col:'col-6 col-md-3' },
-    STAT_ERROR_RATE:{ label:'Error Rate',      icon:'bi-graph-up-arrow',       desc:'% errors in the last hour',  col:'col-6 col-md-3' },
-    STAT_INFOS:     { label:'Info Logs',       icon:'bi-info-circle',          desc:'INFO level log count',       col:'col-6 col-md-3' },
-    STAT_LAST_HOUR: { label:'Last Hour',       icon:'bi-clock-history',        desc:'Logs received in last hour', col:'col-6 col-md-3' },
-    STAT_SERVICES:  { label:'Services',        icon:'bi-hdd-network',          desc:'Distinct services emitting', col:'col-6 col-md-3' },
-    CHART_LEVEL:    { label:'Level Doughnut',  icon:'bi-pie-chart',            desc:'Log distribution by level',  col:'col-md-4' },
-    CHART_TIMELINE: { label:'Timeline',        icon:'bi-bar-chart-line',       desc:'Log volume over 24 h',       col:'col-md-8' },
-    CHART_SERVICES: { label:'Top Services',    icon:'bi-diagram-3',            desc:'Most active microservices',  col:'col-md-6' },
-    CHART_LEVEL_BAR:{ label:'Level Bar Chart', icon:'bi-bar-chart-steps',      desc:'Level counts as bar chart',  col:'col-md-6' },
-    TABLE_RECENT:   { label:'Recent Logs',     icon:'bi-table',                desc:'Last 10 log entries',        col:'col-md-12' },
-    TABLE_ERRORS:   { label:'Recent Errors',   icon:'bi-bug',                  desc:'Last 10 ERROR log entries',  col:'col-md-12' },
-    GAUGE_CPU:      { label:'CPU Load',        icon:'bi-cpu',                  desc:'Live processor utilization', col:'col-md-4'  },
-    GAUGE_RAM:      { label:'Memory',          icon:'bi-memory',               desc:'Live RAM utilization',       col:'col-md-4'  },
-    GAUGE_DISK:     { label:'Disk Usage',      icon:'bi-hdd',                  desc:'Storage space utilization',  col:'col-md-4'  },
+    STAT_TOTAL: { label: 'Total Logs', icon: 'bi-layers', desc: 'All-time log count', col: 'col-6 col-md-3' },
+    STAT_ERRORS: { label: 'Error Count', icon: 'bi-x-circle', desc: 'ERROR level log count', col: 'col-6 col-md-3' },
+    STAT_WARNS: { label: 'Warnings', icon: 'bi-exclamation-triangle', desc: 'WARN level log count', col: 'col-6 col-md-3' },
+    STAT_ERROR_RATE: { label: 'Error Rate', icon: 'bi-graph-up-arrow', desc: '% errors in the last hour', col: 'col-6 col-md-3' },
+    STAT_INFOS: { label: 'Info Logs', icon: 'bi-info-circle', desc: 'INFO level log count', col: 'col-6 col-md-3' },
+    STAT_LAST_HOUR: { label: 'Last Hour', icon: 'bi-clock-history', desc: 'Logs received in last hour', col: 'col-6 col-md-3' },
+    STAT_SERVICES: { label: 'Services', icon: 'bi-hdd-network', desc: 'Distinct services emitting', col: 'col-6 col-md-3' },
+    CHART_LEVEL: { label: 'Level Doughnut', icon: 'bi-pie-chart', desc: 'Log distribution by level', col: 'col-md-4' },
+    CHART_TIMELINE: { label: 'Timeline', icon: 'bi-bar-chart-line', desc: 'Log volume over 24 h', col: 'col-md-8' },
+    CHART_SERVICES: { label: 'Top Services', icon: 'bi-diagram-3', desc: 'Most active microservices', col: 'col-md-6' },
+    CHART_LEVEL_BAR: { label: 'Level Bar Chart', icon: 'bi-bar-chart-steps', desc: 'Level counts as bar chart', col: 'col-md-6' },
+    TABLE_RECENT: { label: 'Recent Logs', icon: 'bi-table', desc: 'Last 10 log entries', col: 'col-md-12' },
+    TABLE_ERRORS: { label: 'Recent Errors', icon: 'bi-bug', desc: 'Last 10 ERROR log entries', col: 'col-md-12' },
+    GAUGE_CPU: { label: 'CPU Load', icon: 'bi-cpu', desc: 'Live processor utilization', col: 'col-md-4' },
+    GAUGE_RAM: { label: 'Memory', icon: 'bi-memory', desc: 'Live RAM utilization', col: 'col-md-4' },
+    GAUGE_DISK: { label: 'Disk Usage', icon: 'bi-hdd', desc: 'Storage space utilization', col: 'col-md-4' },
 };
-const SIZE_CLASS  = { SMALL:'col-6 col-md-3', MEDIUM:'col-md-4', LARGE:'col-md-8', FULL:'col-md-12' };
-const STAT_TYPES  = new Set(['STAT_TOTAL','STAT_ERRORS','STAT_WARNS','STAT_ERROR_RATE','STAT_INFOS','STAT_LAST_HOUR','STAT_SERVICES']);
+const SIZE_CLASS = { SMALL: 'col-6 col-md-3', MEDIUM: 'col-md-4', LARGE: 'col-md-8', FULL: 'col-md-12' };
+const STAT_TYPES = new Set(['STAT_TOTAL', 'STAT_ERRORS', 'STAT_WARNS', 'STAT_ERROR_RATE', 'STAT_INFOS', 'STAT_LAST_HOUR', 'STAT_SERVICES']);
 const CHART_TYPES = new Set(['CHART_LEVEL','CHART_TIMELINE','CHART_SERVICES','CHART_LEVEL_BAR']);
 const TABLE_TYPES = new Set(['TABLE_RECENT','TABLE_ERRORS']);
 const GAUGE_TYPES = new Set(['GAUGE_CPU','GAUGE_RAM','GAUGE_DISK']);
-const TABLE_URL   = { TABLE_RECENT:'/api/logs?size=10', TABLE_ERRORS:'/api/logs?size=10&level=ERROR' };
+const TABLE_URL = { TABLE_RECENT: '/api/logs?size=10', TABLE_ERRORS: '/api/logs?size=10&level=ERROR' };
 const LEVEL_COLORS = { DEBUG:'#6c757d', INFO:'#1f6feb', WARN:'#d29922', ERROR:'#da3633' };
-const BADGE_CLASS  = { DEBUG:'badge-DEBUG', INFO:'badge-INFO', WARN:'badge-WARN', ERROR:'badge-ERROR' };
+const BADGE_CLASS = { DEBUG: 'badge-DEBUG', INFO: 'badge-INFO', WARN: 'badge-WARN', ERROR: 'badge-ERROR' };
 
 function colClass(w) { return SIZE_CLASS[w.size] || WIDGET_DEFS[w.type]?.col || 'col-md-6'; }
 
-// ════════════════════════════════════════════════════════════════════
 // Init
-// ════════════════════════════════════════════════════════════════════
 window.addEventListener('DOMContentLoaded', () => {
     document.getElementById('themeToggle').checked = !isDark();
     applyI18n();
@@ -675,7 +667,7 @@ window.addEventListener('DOMContentLoaded', () => {
     readFilterFromUrl();
     prefillFilterForm();
     loadProfile();
-    loadPages();          // loads pages, then triggers loadDashboard + fetchAndRenderLog
+    loadPages();  
     fetchSystemMetrics();
     startPeriodicRefresh();
 });
@@ -692,9 +684,7 @@ function buildAddWidgetModal() {
             </div>`).join('');
 }
 
-// ════════════════════════════════════════════════════════════════════
-// Log filter — URL-driven state (no page reload)
-// ════════════════════════════════════════════════════════════════════
+// Log filter 
 function readFilterFromUrl() {
     const urlParams = new URLSearchParams(window.location.search);
     logFilter = {
@@ -709,11 +699,11 @@ function readFilterFromUrl() {
 }
 
 function prefillFilterForm() {
-    document.getElementById('fLevel').value   = logFilter.level;
+    document.getElementById('fLevel').value = logFilter.level;
     document.getElementById('fService').value = logFilter.service;
-    document.getElementById('fFrom').value    = logFilter.from;
-    document.getElementById('fTo').value      = logFilter.to;
-    document.getElementById('fQ').value       = logFilter.q;
+    document.getElementById('fFrom').value = logFilter.from;
+    document.getElementById('fTo').value = logFilter.to;
+    document.getElementById('fQ').value = logFilter.q;
     document.getElementById('pageSizeSelect').value = String(logFilter.size);
     updateClearBtn();
 }
@@ -721,7 +711,6 @@ function prefillFilterForm() {
 function applyFilter(event) {
     event?.preventDefault();
     const fService = document.getElementById('fService');
-    // Don't override page-locked service
     const serviceVal = (currentPage?.serviceName && fService.readOnly)
         ? '' : fService.value;
     logFilter = {
@@ -760,7 +749,7 @@ function setPage(p) {
 
 function jumpToPage() {
     const inp = document.getElementById('gotoPage');
-    const p   = parseInt(inp.value) - 1;
+    const p = parseInt(inp.value) - 1;
     inp.value = '';
     if (isNaN(p) || p < 0 || p >= logTotalPages) return;
     setPage(p);
@@ -777,9 +766,8 @@ function updateClearBtn() {
     document.getElementById('clearBtn').style.display = hasFilter ? '' : 'none';
 }
 
-// ════════════════════════════════════════════════════════════════════
+
 // Fetch & render log table
-// ════════════════════════════════════════════════════════════════════
 async function fetchAndRenderLog() {
     const queryParams = new URLSearchParams();
     Object.entries(logFilter).forEach(([key, value]) => { if (value !== '' && value !== null) queryParams.set(key, value); });
@@ -792,9 +780,9 @@ async function fetchAndRenderLog() {
 }
 
 function renderLog(page) {
-    logTotalPages    = page.totalPages || 1;
+    logTotalPages = page.totalPages || 1;
     logTotalElements = page.totalElements || 0;
-    const cur        = page.number || 0;
+    const cur = page.number || 0;
 
     // Count line
     const total = logTotalElements.toLocaleString();
@@ -803,7 +791,6 @@ function renderLog(page) {
         `${total} ${entryWord}` +
         (page.totalPages > 1 ? ` — ${t('log.page')} ${cur + 1} ${t('log.of')} ${page.totalPages}` : '');
 
-    // Show page-size & goto only when there's something to page through
     document.getElementById('pageSizeWrap').style.setProperty('display', 'flex', 'important');
     document.getElementById('gotoWrap').style.display = logTotalPages > 1 ? '' : 'none';
     const gotoInp = document.getElementById('gotoPage');
@@ -839,7 +826,7 @@ function renderPagination(currentPageIndex, totalPages, isFirstPage, isLastPage)
          </li>`;
 
     const windowStart = Math.max(0, currentPageIndex - 3);
-    const windowEnd   = Math.min(totalPages - 1, currentPageIndex + 3);
+    const windowEnd = Math.min(totalPages - 1, currentPageIndex + 3);
     let paginationHtml = '<ul class="pagination pagination-sm mb-0">';
 
     paginationHtml += pageBtn(currentPageIndex - 1, '<i class="bi bi-chevron-left"></i>', isFirstPage);
@@ -863,12 +850,10 @@ function renderPagination(currentPageIndex, totalPages, isFirstPage, isLastPage)
     paginationEl.innerHTML = paginationHtml;
 }
 
-// ════════════════════════════════════════════════════════════════════
 // Widget dashboard load
-// ════════════════════════════════════════════════════════════════════
 async function loadDashboard() {
     const serviceQueryParam = currentPage?.serviceName ? `?service=${encodeURIComponent(currentPage.serviceName)}` : '';
-    const pageQueryParam    = currentPage ? `?pageId=${currentPage.id}` : '';
+    const pageQueryParam = currentPage ? `?pageId=${currentPage.id}` : '';
     const [metrics, widgets] = await Promise.all([
         fetch('/api/metrics/summary' + serviceQueryParam).then(r => r.json()),
         fetch('/api/widgets' + pageQueryParam).then(r => r.json()),
@@ -890,9 +875,7 @@ function renderAllWidgets(widgets, metrics) {
     initSortable();
 }
 
-// ════════════════════════════════════════════════════════════════════
 // Widget shell
-// ════════════════════════════════════════════════════════════════════
 function buildWidgetShell(widget) {
     const columnDiv = document.createElement('div');
     columnDiv.className = `${colClass(widget)} widget-col`;
@@ -909,27 +892,25 @@ function buildWidgetShell(widget) {
     return columnDiv;
 }
 
-// ════════════════════════════════════════════════════════════════════
 // Per-type renderers
-// ════════════════════════════════════════════════════════════════════
 function renderWidgetContent(widget, metrics) {
     const contentEl = document.getElementById(`wc-${widget.id}`);
     if (!contentEl) return;
     switch (widget.type) {
-        case 'STAT_TOTAL':      stat(contentEl, widget, fmt(metrics.totalLogs ?? 0), 'bi-layers', 'si-primary', 'All time'); break;
-        case 'STAT_ERRORS':     stat(contentEl, widget, fmt(metrics.countByLevel?.ERROR ?? 0), 'bi-x-circle', 'si-danger', '24 h'); break;
-        case 'STAT_WARNS':      stat(contentEl, widget, fmt(metrics.countByLevel?.WARN ?? 0), 'bi-exclamation-triangle', 'si-warning', '24 h'); break;
+        case 'STAT_TOTAL': stat(contentEl, widget, fmt(metrics.totalLogs ?? 0), 'bi-layers', 'si-primary', 'All time'); break;
+        case 'STAT_ERRORS': stat(contentEl, widget, fmt(metrics.countByLevel?.ERROR ?? 0), 'bi-x-circle', 'si-danger', '24 h'); break;
+        case 'STAT_WARNS': stat(contentEl, widget, fmt(metrics.countByLevel?.WARN ?? 0), 'bi-exclamation-triangle', 'si-warning', '24 h'); break;
         case 'STAT_ERROR_RATE': stat(contentEl, widget, (metrics.errorRate ?? 0).toFixed(1) + '%', 'bi-graph-up-arrow', 'si-info', 'Last hour'); break;
-        case 'STAT_INFOS':      stat(contentEl, widget, fmt(metrics.countByLevel?.INFO ?? 0), 'bi-info-circle', 'si-primary', '24 h'); break;
-        case 'STAT_LAST_HOUR':  stat(contentEl, widget, fmt(metrics.logsLastHour ?? 0), 'bi-clock-history', 'si-success', 'Last hour'); break;
-        case 'STAT_SERVICES':   stat(contentEl, widget, fmt(metrics.servicesCount ?? 0), 'bi-hdd-network', 'si-purple', 'Active'); break;
-        case 'CHART_LEVEL':     chartDoughnut(contentEl, widget, metrics.countByLevel ?? {}); break;
+        case 'STAT_INFOS': stat(contentEl, widget, fmt(metrics.countByLevel?.INFO ?? 0), 'bi-info-circle', 'si-primary', '24 h'); break;
+        case 'STAT_LAST_HOUR': stat(contentEl, widget, fmt(metrics.logsLastHour ?? 0), 'bi-clock-history', 'si-success', 'Last hour'); break;
+        case 'STAT_SERVICES': stat(contentEl, widget, fmt(metrics.servicesCount ?? 0), 'bi-hdd-network', 'si-purple', 'Active'); break;
+        case 'CHART_LEVEL': chartDoughnut(contentEl, widget, metrics.countByLevel ?? {}); break;
         case 'CHART_LEVEL_BAR': chartLevelBar(contentEl, widget, metrics.countByLevel ?? {}); break;
-        case 'CHART_TIMELINE':  chartTimeline(contentEl, widget, metrics.timeSeriesData ?? []); break;
-        case 'CHART_SERVICES':  chartServices(contentEl, widget, metrics.topServices ?? []); break;
+        case 'CHART_TIMELINE': chartTimeline(contentEl, widget, metrics.timeSeriesData ?? []); break;
+        case 'CHART_SERVICES': chartServices(contentEl, widget, metrics.topServices ?? []); break;
         case 'TABLE_RECENT': case 'TABLE_ERRORS': tableLog(contentEl, widget, TABLE_URL[widget.type]); break;
-        case 'GAUGE_CPU':  renderGaugeWidget(contentEl, widget, systemMetrics?.cpuUsagePercent ?? 0, `${systemMetrics?.cpuCores ?? 0} cores`); break;
-        case 'GAUGE_RAM':  renderGaugeWidget(contentEl, widget, systemMetrics?.ramUsagePercent ?? 0, `${systemMetrics?.ramUsed ?? ''} / ${systemMetrics?.ramTotal ?? ''}`); break;
+        case 'GAUGE_CPU': renderGaugeWidget(contentEl, widget, systemMetrics?.cpuUsagePercent ?? 0, `${systemMetrics?.cpuCores ?? 0} cores`); break;
+        case 'GAUGE_RAM': renderGaugeWidget(contentEl, widget, systemMetrics?.ramUsagePercent ?? 0, `${systemMetrics?.ramUsed ?? ''} / ${systemMetrics?.ramTotal ?? ''}`); break;
         case 'GAUGE_DISK': renderGaugeWidget(contentEl, widget, systemMetrics?.diskUsagePercent ?? 0, `${systemMetrics?.diskUsed ?? ''} / ${systemMetrics?.diskTotal ?? ''}`); break;
         default: contentEl.innerHTML = `<span class="text-muted small">Unknown: ${widget.type}</span>`;
     }
@@ -950,9 +931,9 @@ function stat(contentEl, widget, value, iconClass, iconColorClass, subLabel) {
 
 function chartDoughnut(contentEl, widget, byLevel) {
     contentEl.innerHTML = `<div class="widget-title"><i class="bi bi-pie-chart me-1"></i>${widget.title}</div><div class="chart-wrap"><canvas id="cv-${widget.id}"></canvas></div>`;
-    const levelLabels  = Object.keys(byLevel);
-    const levelValues  = Object.values(byLevel);
-    const colors       = chartColors();
+    const levelLabels = Object.keys(byLevel);
+    const levelValues = Object.values(byLevel);
+    const colors = chartColors();
     chartInstances.set(widget.id, new Chart(document.getElementById(`cv-${widget.id}`), {
         type: 'doughnut',
         data: {
@@ -967,7 +948,7 @@ function chartLevelBar(contentEl, widget, byLevel) {
     contentEl.innerHTML = `<div class="widget-title"><i class="bi bi-bar-chart-steps me-1"></i>${widget.title}</div><div class="chart-wrap"><canvas id="cv-${widget.id}"></canvas></div>`;
     const levelLabels = Object.keys(byLevel);
     const levelValues = Object.values(byLevel);
-    const colors      = chartColors();
+    const colors = chartColors();
     chartInstances.set(widget.id, new Chart(document.getElementById(`cv-${widget.id}`), {
         type: 'bar',
         data: {
@@ -1007,8 +988,8 @@ function chartServices(contentEl, widget, topServices) {
 async function tableLog(contentEl, widget, url) {
     contentEl.innerHTML = `<div class="widget-title"><i class="bi bi-table me-1"></i>${widget.title}</div><div class="text-center py-3"><div class="spinner-border spinner-border-sm text-muted"></div></div>`;
     const responseData = await fetch(url).then(r => r.json()).catch(() => ({ content: [] }));
-    const logEntries   = responseData.content ?? [];
-    const tableRows    = !logEntries.length
+    const logEntries = responseData.content ?? [];
+    const tableRows = !logEntries.length
         ? `<tr><td colspan="4" class="text-center text-muted py-4"><i class="bi bi-inbox"></i> ${t('log.empty')}</td></tr>`
         : logEntries.map(logEntry => `<tr>
             <td class="font-monospace small text-nowrap">${logEntry.formattedTimestamp ?? ''}</td>
@@ -1026,9 +1007,7 @@ async function tableLog(contentEl, widget, url) {
 function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function fmt(n) { return Number(n).toLocaleString(); }
 
-// ════════════════════════════════════════════════════════════════════
 // System Metrics (CPU / RAM / Disk gauges)
-// ════════════════════════════════════════════════════════════════════
 async function fetchSystemMetrics() {
     systemMetrics = await fetch('/api/system/metrics').then(r=>r.json()).catch(()=>null);
 }
@@ -1041,7 +1020,7 @@ function gaugeColor(percentage) {
 
 function renderGaugeWidget(contentEl, widget, percentage, detailText) {
     const clampedPct = Math.min(100, Math.max(0, percentage));
-    const fillColor  = gaugeColor(clampedPct);
+    const fillColor = gaugeColor(clampedPct);
     const trackColor = isDark() ? '#21262d' : '#e8ecef';
     contentEl.innerHTML = `
         <div class="widget-title">${widget.title}</div>
@@ -1069,13 +1048,13 @@ function updateGaugeInPlace(widget, sysMetrics) {
     if (!sysMetrics) return;
     let percentage, detailText;
     switch (widget.type) {
-        case 'GAUGE_CPU':  percentage = sysMetrics.cpuUsagePercent;  detailText = `${sysMetrics.cpuCores} cores`; break;
-        case 'GAUGE_RAM':  percentage = sysMetrics.ramUsagePercent;  detailText = `${sysMetrics.ramUsed} / ${sysMetrics.ramTotal}`; break;
+        case 'GAUGE_CPU': percentage = sysMetrics.cpuUsagePercent; detailText = `${sysMetrics.cpuCores} cores`; break;
+        case 'GAUGE_RAM': percentage = sysMetrics.ramUsagePercent; detailText = `${sysMetrics.ramUsed} / ${sysMetrics.ramTotal}`; break;
         case 'GAUGE_DISK': percentage = sysMetrics.diskUsagePercent; detailText = `${sysMetrics.diskUsed} / ${sysMetrics.diskTotal}`; break;
         default: return;
     }
     percentage = Math.min(100, Math.max(0, percentage));
-    const fillColor  = gaugeColor(percentage);
+    const fillColor = gaugeColor(percentage);
     const trackColor = isDark() ? '#21262d' : '#e8ecef';
     const chart = chartInstances.get(widget.id);
     if (chart) {
@@ -1090,9 +1069,7 @@ function updateGaugeInPlace(widget, sysMetrics) {
     markUpdated(widget.id);
 }
 
-// ════════════════════════════════════════════════════════════════════
 // Drag & Drop
-// ════════════════════════════════════════════════════════════════════
 let sortable = null;
 function initSortable() {
     if (sortable) sortable.destroy();
@@ -1112,9 +1089,7 @@ async function saveWidgetOrder() {
     }).catch(console.warn);
 }
 
-// ════════════════════════════════════════════════════════════════════
 // Periodic refresh (normal mode: stats every 20s, charts/tables/log every 30s)
-// ════════════════════════════════════════════════════════════════════
 function startPeriodicRefresh() {
     setInterval(periodicStatRefresh, 20_000);
     setInterval(periodicFullRefresh, 30_000);
@@ -1131,10 +1106,10 @@ async function periodicStatRefresh() {
             fetch(metricsUrl()).then(r => r.json()),
             fetch('/api/system/metrics').then(r => r.json()),
         ]);
-        metricsCache  = freshMetrics;
+        metricsCache = freshMetrics;
         systemMetrics = freshSystemMetrics;
         widgetRegistry.forEach(widget => {
-            if (STAT_TYPES.has(widget.type))  updateStatInPlace(widget, freshMetrics);
+            if (STAT_TYPES.has(widget.type)) updateStatInPlace(widget, freshMetrics);
             if (GAUGE_TYPES.has(widget.type)) updateGaugeInPlace(widget, freshSystemMetrics);
         });
         document.getElementById('globalRefreshTs').textContent = t('nav.updated') + ' ' + timeStr();
@@ -1157,19 +1132,19 @@ async function periodicFullRefresh() {
     fetchAndRenderLog();
 }
 
-// ── In-place stat update ──────────────────────────────────────────────
+// In-place stat update
 function updateStatInPlace(widget, metrics) {
     const valueSpan = document.getElementById(`stat-val-${widget.id}`);
     if (!valueSpan) return;
     let newValue;
     switch (widget.type) {
-        case 'STAT_TOTAL':      newValue = fmt(metrics.totalLogs ?? 0); break;
-        case 'STAT_ERRORS':     newValue = fmt(metrics.countByLevel?.ERROR ?? 0); break;
-        case 'STAT_WARNS':      newValue = fmt(metrics.countByLevel?.WARN ?? 0); break;
+        case 'STAT_TOTAL': newValue = fmt(metrics.totalLogs ?? 0); break;
+        case 'STAT_ERRORS': newValue = fmt(metrics.countByLevel?.ERROR ?? 0); break;
+        case 'STAT_WARNS': newValue = fmt(metrics.countByLevel?.WARN ?? 0); break;
         case 'STAT_ERROR_RATE': newValue = (metrics.errorRate ?? 0).toFixed(1) + '%'; break;
-        case 'STAT_INFOS':      newValue = fmt(metrics.countByLevel?.INFO ?? 0); break;
-        case 'STAT_LAST_HOUR':  newValue = fmt(metrics.logsLastHour ?? 0); break;
-        case 'STAT_SERVICES':   newValue = fmt(metrics.servicesCount ?? 0); break;
+        case 'STAT_INFOS': newValue = fmt(metrics.countByLevel?.INFO ?? 0); break;
+        case 'STAT_LAST_HOUR': newValue = fmt(metrics.logsLastHour ?? 0); break;
+        case 'STAT_SERVICES': newValue = fmt(metrics.servicesCount ?? 0); break;
         default: return;
     }
     if (valueSpan.textContent !== newValue) {
@@ -1181,7 +1156,7 @@ function updateStatInPlace(widget, metrics) {
     }
 }
 
-// ── In-place chart update ─────────────────────────────────────────────
+// In-place chart update
 function updateChartInPlace(widget, metrics) {
     const chart = chartInstances.get(widget.id);
     if (!chart) return;
@@ -1219,12 +1194,12 @@ function applyAllChartThemes() {
         if (chart.options.scales) {
             Object.values(chart.options.scales).forEach(axis => {
                 if (axis.ticks) axis.ticks.color = colors.tick;
-                if (axis.grid)  axis.grid.color  = colors.grid;
+                if (axis.grid) axis.grid.color = colors.grid;
             });
         }
         const dataset = chart.data.datasets[0];
         if (dataset && chart.config.type === 'line') {
-            dataset.borderColor     = colors.line;
+            dataset.borderColor = colors.line;
             dataset.backgroundColor = colors.lineFill;
         }
         if (dataset && chart.config.type === 'doughnut') {
@@ -1240,18 +1215,16 @@ function markUpdated(widgetId) {
 }
 function timeStr() { return new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'}); }
 
-// ════════════════════════════════════════════════════════════════════
 // Live Stream Mode
-// ════════════════════════════════════════════════════════════════════
-let streamActive   = false;
-let streamTimer    = null;
+let streamActive = false;
+let streamTimer = null;
 let streamChartInt = null;
 let streamLogCount = 0;
 
 function toggleStream() { streamActive ? stopStream() : startStream(); }
 
 function startStream() {
-    streamActive   = true;
+    streamActive = true;
     streamLogCount = 0;
     updateStreamUI();
 
@@ -1269,10 +1242,10 @@ function startStream() {
             fetch('/api/system/metrics').then(r => r.json()).catch(() => systemMetrics),
         ]);
         if (freshMetrics) {
-            metricsCache  = freshMetrics;
+            metricsCache = freshMetrics;
             systemMetrics = freshSystemMetrics;
             widgetRegistry.forEach(widget => {
-                if (STAT_TYPES.has(widget.type))  updateStatInPlace(widget, freshMetrics);
+                if (STAT_TYPES.has(widget.type)) updateStatInPlace(widget, freshMetrics);
                 if (GAUGE_TYPES.has(widget.type)) updateGaugeInPlace(widget, freshSystemMetrics);
             });
             document.getElementById('globalRefreshTs').textContent = t('nav.updated') + ' ' + timeStr();
@@ -1310,9 +1283,9 @@ function stopStream() {
 }
 
 function updateStreamUI() {
-    const streamButton    = document.getElementById('streamBtn');
+    const streamButton = document.getElementById('streamBtn');
     const streamIndicator = document.getElementById('streamIndicator');
-    const liveBadge       = document.getElementById('logLiveBadge');
+    const liveBadge = document.getElementById('logLiveBadge');
     if (streamActive) {
         streamButton.className = 'btn btn-sm btn-danger';
         streamButton.innerHTML = `<i class="bi bi-stop-fill me-1"></i>${t('nav.stopStream')}`;
@@ -1326,14 +1299,12 @@ function updateStreamUI() {
     }
 }
 
-// ════════════════════════════════════════════════════════════════════
 // Add / Remove widget
-// ════════════════════════════════════════════════════════════════════
 async function addWidget(type) {
     const pageParam = currentPage ? `?pageId=${currentPage.id}` : '';
     const response = await fetch('/api/widgets' + pageParam, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type }) });
     if (!response.ok) return;
-    const widget  = await response.json();
+    const widget = await response.json();
     const metrics = metricsCache ?? await fetch('/api/metrics/summary').then(r => r.json()).catch(() => ({}));
     metricsCache = metrics;
     widgetRegistry.set(widget.id, widget);
@@ -1355,17 +1326,13 @@ async function removeWidget(id) {
         document.getElementById('widget-empty').style.display = 'block';
 }
 
-// ════════════════════════════════════════════════════════════════════
 // One-shot demo
-// ════════════════════════════════════════════════════════════════════
 function generateDemoOnce() {
     fetch('/api/demo/generate?count=50',{method:'POST'})
         .then(r=>r.json()).then(()=>fetchAndRenderLog()).catch(console.error);
 }
 
-// ════════════════════════════════════════════════════════════════════
 // Clear Logs
-// ════════════════════════════════════════════════════════════════════
 let logTotalElements = 0;   // updated each time renderLog() runs
 let _clearScope = 'all';
 
@@ -1374,7 +1341,7 @@ function openClearModal() {
 
     // Counts
     document.getElementById('clearFilteredCount').textContent = logTotalElements.toLocaleString();
-    document.getElementById('clearAllCount').textContent      = fmt(metricsCache?.totalLogs ?? 0);
+    document.getElementById('clearAllCount').textContent = fmt(metricsCache?.totalLogs ?? 0);
 
     // Filter summary text
     const parts = [];
@@ -1395,7 +1362,7 @@ function openClearModal() {
 function selectClearScope(scope) {
     _clearScope = scope;
     document.getElementById('scopeFiltered').checked = scope === 'filtered';
-    document.getElementById('scopeAll').checked      = scope === 'all';
+    document.getElementById('scopeAll').checked = scope === 'all';
     document.getElementById('scopeFilteredCard').classList.toggle('scope-selected', scope === 'filtered');
     document.getElementById('scopeAllCard').classList.toggle('scope-selected', scope === 'all');
 
@@ -1403,9 +1370,7 @@ function selectClearScope(scope) {
     document.getElementById('confirmDeleteLabel').textContent = `${t('clear.delete')} ${fmt(count)}`;
 }
 
-// ════════════════════════════════════════════════════════════════════
 // Profile & Settings
-// ════════════════════════════════════════════════════════════════════
 async function loadProfile() {
     userProfile = await fetch('/api/profile').then(r=>r.json()).catch(()=>null);
     if (!userProfile) return;
@@ -1447,9 +1412,9 @@ function selectLang(lang) {
 }
 
 function updateLangButtons() {
-    const activeLang   = _pendingLang || currentLang;
-    const englishBtn   = document.getElementById('langBtnEn');
-    const russianBtn   = document.getElementById('langBtnRu');
+    const activeLang = _pendingLang || currentLang;
+    const englishBtn = document.getElementById('langBtnEn');
+    const russianBtn = document.getElementById('langBtnRu');
     if (englishBtn) englishBtn.className = 'btn btn-outline-secondary btn-sm' + (activeLang === 'en' ? ' lang-btn-active' : '');
     if (russianBtn) russianBtn.className = 'btn btn-outline-secondary btn-sm' + (activeLang === 'ru' ? ' lang-btn-active' : '');
 }
@@ -1457,7 +1422,7 @@ function updateLangButtons() {
 async function saveSettings() {
     const name = document.getElementById('settingsName').value.trim();
     const lang = _pendingLang || currentLang;
-    const res  = await fetch('/api/profile', {
+    const res = await fetch('/api/profile', {
         method:'PUT', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({ displayName: name || null, language: lang })
     });
@@ -1498,9 +1463,7 @@ async function uploadAvatar(input) {
     input.value = '';
 }
 
-// ════════════════════════════════════════════════════════════════════
 // Dashboard Pages
-// ════════════════════════════════════════════════════════════════════
 async function loadPages() {
     let pages = await fetch('/api/pages').then(r => r.json()).catch(() => []);
     if (!pages.length) pages = [{ id: null, name: 'Default', serviceName: null, position: 0 }];
@@ -1580,7 +1543,7 @@ function openAddPageModal() {
 
 async function savePageModal() {
     const name = document.getElementById('pageNameInput').value.trim();
-    const svc  = document.getElementById('pageServiceInput').value.trim();
+    const svc = document.getElementById('pageServiceInput').value.trim();
     if (!name) { document.getElementById('pageNameInput').classList.add('is-invalid'); return; }
     document.getElementById('pageNameInput').classList.remove('is-invalid');
 
@@ -1630,16 +1593,16 @@ async function executeClearLogs() {
 
     const filterParams = new URLSearchParams();
     if (_clearScope === 'filtered') {
-        if (logFilter.level)   filterParams.set('level',   logFilter.level);
+        if (logFilter.level) filterParams.set('level', logFilter.level);
         if (logFilter.service) filterParams.set('service', logFilter.service);
-        if (logFilter.from)    filterParams.set('from',    logFilter.from);
-        if (logFilter.to)      filterParams.set('to',      logFilter.to);
-        if (logFilter.q)       filterParams.set('q',       logFilter.q);
+        if (logFilter.from) filterParams.set('from', logFilter.from);
+        if (logFilter.to) filterParams.set('to', logFilter.to);
+        if (logFilter.q) filterParams.set('q', logFilter.q);
     }
 
     try {
         const deleteResponse = await fetch('/api/logs?' + filterParams, { method: 'DELETE' });
-        const deleteResult   = await deleteResponse.json();
+        const deleteResult = await deleteResponse.json();
         console.log(deleteResult.message);
     } catch (error) {
         console.error('Delete failed', error);

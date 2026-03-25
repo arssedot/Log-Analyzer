@@ -87,7 +87,9 @@ public class MetricsService {
     }
 
     private double computeErrorRate(long totalLogsInLastHour, Instant oneHourAgo, String serviceName) {
-        if (totalLogsInLastHour == 0) return 0.0;
+        if (totalLogsInLastHour == 0) {
+            return 0.0;
+        }
         boolean isScopedToService = serviceName != null && !serviceName.isBlank();
         long errorCount = isScopedToService
                 ? logEntryRepository.countByServiceNameAndLevelAndTimestampAfter(serviceName, LogLevel.ERROR, oneHourAgo)
