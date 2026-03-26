@@ -222,15 +222,19 @@ src/main/resources/
 
 ### 1. Настройки
 
+<img width="857" height="786" alt="Снимок экрана 2026-03-22 014957" src="https://github.com/user-attachments/assets/b2332e73-ab2b-4a85-ae01-c05a9a3a92b2" />
 
 
 ### 2. Панель виджетов
 
+<img width="1397" height="876" alt="Снимок экрана 2026-03-22 015151" src="https://github.com/user-attachments/assets/858d6d45-7979-44a4-8b2d-4389a2e3ba62" />
 
 
 ### 3. Развернутые виджеты
 
+<img width="2527" height="1178" alt="Снимок экрана 2026-03-22 015114" src="https://github.com/user-attachments/assets/4f0d2cd2-e5ce-46d5-abb1-fc5d33db8341" />
 
 
 ### 4. Таблица с логами
 
+<img width="2524" height="1162" alt="Снимок экрана 2026-03-22 015136" src="https://github.com/user-attachments/assets/4be05d4a-772b-4ae6-80ec-38d9dfd482dd" />
